@@ -1,0 +1,42 @@
+---
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+import SectionHeader from "../ui/SectionHeader.astro";
+
+export interface MethodStep {
+  title: string;
+  description: string;
+}
+
+export interface Props {
+  title?: string;
+  description?: string;
+  steps?: readonly MethodStep[];
+}
+
+const {
+  title = "TODO_METHOD_SECTION_TITLE",
+  description = "TODO_METHOD_SECTION_DESCRIPTION",
+  steps = [],
+} = Astro.props as Props;
+---
+
+<Section id="method" spacing="lg" width="full" aria-labelledby="method-title">
+  <Container>
+    <!-- TODO_METHOD_SECTION: fournir des étapes réelles et ordonnées avant affichage. -->
+    <SectionHeader title={title} description={description} headingId="method-title" />
+
+    {
+      steps.length > 0 && (
+        <ol class="mt-10 grid min-w-0 gap-6 pl-6 md:grid-cols-2 lg:grid-cols-3">
+          {steps.map((step) => (
+            <li class="safe-wrap min-w-0 pl-2">
+              <h3>{step.title}</h3>
+              <p class="mt-3 text-[var(--color-text-muted)]">{step.description}</p>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </Container>
+</Section>

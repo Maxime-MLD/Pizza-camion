@@ -1,0 +1,57 @@
+---
+type HeadingLevel = 1 | 2 | 3;
+type Alignment = "start" | "center";
+
+export interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  level?: HeadingLevel;
+  headingId?: string;
+  align?: Alignment;
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  eyebrow,
+  level = 2,
+  headingId,
+  align = "start",
+  class: className,
+} = Astro.props as Props;
+
+const Heading = `h${level}` as "h1" | "h2" | "h3";
+const headingClasses: Record<HeadingLevel, string> = {
+  1: "text-h1",
+  2: "text-h2",
+  3: "text-h3",
+};
+---
+
+<header
+  class:list={[
+    "flex max-w-3xl flex-col gap-4",
+    align === "center" && "mx-auto items-center text-center",
+    className,
+  ]}
+>
+  {
+    eyebrow && (
+      <p class="text-small safe-wrap font-body font-semibold tracking-[0.08em] text-[var(--color-text-muted)] uppercase">
+        {eyebrow}
+      </p>
+    )
+  }
+  <Heading id={headingId} class:list={["font-display safe-wrap", headingClasses[level]]}>
+    {title}
+  </Heading>
+  {
+    description && (
+      <p class="text-body-lg safe-wrap max-w-2xl text-[var(--color-text-muted)]">
+        {description}
+      </p>
+    )
+  }
+</header>

@@ -1,0 +1,377 @@
+---
+import { contactFormConfig } from "../../config/form.config";
+import { featuresConfig } from "../../config/features.config";
+import { siteConfig } from "../../config/site.config";
+import { services } from "../../data/services";
+import { isPlaceholderValue } from "../../utils/placeholders";
+import FormCheckbox from "./FormCheckbox.astro";
+import FormField from "./FormField.astro";
+import FormStatus from "./FormStatus.astro";
+import FormTextarea from "./FormTextarea.astro";
+
+export interface Props {
+  id?: string;
+  class?: string;
+}
+
+const { id = "signature-contact-form", class: className } = Astro.props as Props;
+const accessKey = import.meta.env.PUBLIC_WEB3FORMS_ACCESS_KEY?.trim() ?? "";
+const isConfigured = accessKey.length > 0 && !isPlaceholderValue(accessKey);
+const successUrl = new URL(contactFormConfig.successPath, siteConfig.canonicalUrl).href;
+const fields = contactFormConfig.fields;
+const labels = contactFormConfig.labels;
+const messages = contactFormConfig.messages;
+---
+
+<form
+  id={id}
+  class:list={["min-w-0 space-y-6", className]}
+  action="https://api.web3forms.com/submit"
+  method="POST"
+  novalidate
+  data-contact-form
+  data-configured={isConfigured ? "true" : "false"}
+  data-captcha-enabled={featuresConfig.captcha ? "true" : "false"}
+  data-success-url={successUrl}
+  data-message-configuration={messages.configuration}
+  data-message-validation={messages.validation}
+  data-message-captcha={messages.captcha}
+  data-message-loading={messages.loading}
+  data-message-success={messages.success}
+  data-message-error={messages.error}
+>
+  <!-- PUBLIC_WEB3FORMS_ACCESS_KEY est une clé publique prévue pour le navigateur. -->
+  <input type="hidden" name="access_key" value={accessKey} />
+  <input type="hidden" name="subject" value={contactFormConfig.subject} />
+  <input type="hidden" name="redirect" value={successUrl} />
+
+  <div class="hidden" aria-hidden="true">
+    <label for={`${id}-botcheck`}>Ne pas remplir ce champ</label>
+    <input
+      id={`${id}-botcheck`}
+      type="checkbox"
+      name="botcheck"
+      tabindex="-1"
+      autocomplete="off"
+    />
+  </div>
+
+  <p class="text-small text-[var(--color-text-muted)]">{labels.requiredHint}</p>
+
+  <div class="grid min-w-0 gap-6 md:grid-cols-2">
+    {
+      fields.firstName.enabled && (
+        <FormField
+          id={`${id}-first-name`}
+          name="first_name"
+          label={labels.firstName}
+          autocomplete="given-name"
+          required={fields.firstName.required}
+          maxlength={80}
+        />
+      )
+    }
+    {
+      fields.lastName.enabled && (
+        <FormField
+          id={`${id}-last-name`}
+          name="last_name"
+          label={labels.lastName}
+          autocomplete="family-name"
+          required={fields.lastName.required}
+          maxlength={80}
+        />
+      )
+    }
+    {
+      fields.phone.enabled && (
+        <FormField
+          id={`${id}-phone`}
+          name="phone"
+          label={labels.phone}
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          required={fields.phone.required}
+          maxlength={30}
+        />
+      )
+    }
+    {
+      fields.email.enabled && (
+        <FormField
+          id={`${id}-email`}
+          name="email"
+          label={labels.email}
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          required={fields.email.required}
+          maxlength={254}
+        />
+      )
+    }
+  </div>
+
+  {
+    fields.service.enabled && (
+      <div class="min-w-0" data-form-field>
+        <label class="safe-wrap block font-semibold" for={`${id}-service`}>
+          {labels.service}
+          {fields.service.required && <span aria-hidden="true"> *</span>}
+        </label>
+        <select
+          id={`${id}-service`}
+          name="service"
+          required={fields.service.required}
+          aria-describedby={`${id}-service-error`}
+          class="focus-ring mt-2 min-h-12 w-full min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-3 text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+          data-form-control
+        >
+          <option value="" selected disabled>{labels.servicePlaceholder}</option>
+          {services.map((service) => <option value={service.id}>{service.title}</option>)}
+          <option value="other">{labels.otherService}</option>
+        </select>
+        <p
+          id={`${id}-service-error`}
+          class="mt-2 text-small font-semibold text-[var(--color-text)]"
+          data-field-error
+          hidden
+        ></p>
+      </div>
+    )
+  }
+
+  {
+    fields.message.enabled && (
+      <FormTextarea
+        id={`${id}-message`}
+        name="message"
+        label={labels.message}
+        required={fields.message.required}
+        minlength={10}
+        maxlength={5000}
+      />
+    )
+  }
+
+  {
+    fields.consent.enabled && (
+      <FormCheckbox
+        id={`${id}-consent`}
+        name="privacy_consent"
+        label={labels.consentText}
+        linkHref="/politique-confidentialite"
+        linkLabel={labels.privacyPolicy}
+        required={fields.consent.required}
+      />
+    )
+  }
+
+  {
+    featuresConfig.captcha && (
+      <div class="min-w-0" data-captcha-field tabindex="-1">
+        <div class="h-captcha" data-captcha="true" />
+        <p
+          class="mt-2 text-small font-semibold text-[var(--color-text)]"
+          data-captcha-error
+          aria-live="polite"
+          hidden
+        />
+      </div>
+    )
+  }
+
+  <FormStatus id={`${id}-status`} />
+
+  <button
+    type="submit"
+    class="focus-ring tap-target inline-flex max-w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-3 text-center font-semibold text-[var(--color-on-primary)] hover:opacity-90 disabled:pointer-events-none disabled:cursor-wait disabled:opacity-60"
+    data-submit-button
+    data-label-idle={labels.submit}
+    data-label-loading={labels.loading}
+  >
+    <span data-submit-label>{labels.submit}</span>
+  </button>
+</form>
+
+{
+  featuresConfig.captcha && (
+    <script is:inline src="https://web3forms.com/client/script.js" async defer></script>
+  )
+}
+
+<script>
+  type FormControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+  type StatusState = "loading" | "success" | "error";
+
+  interface Web3FormsResponse {
+    success?: boolean;
+    message?: string;
+  }
+
+  const forms = document.querySelectorAll<HTMLFormElement>("[data-contact-form]");
+
+  for (const form of forms) {
+    if (form.dataset.initialized === "true") continue;
+
+    let isSubmitting = false;
+    const submitButton = form.querySelector<HTMLButtonElement>("[data-submit-button]");
+    const submitLabel = form.querySelector<HTMLElement>("[data-submit-label]");
+    const status = form.querySelector<HTMLElement>("[data-form-status]");
+    const statusText = form.querySelector<HTMLElement>("[data-form-status-text]");
+    const controls = Array.from(form.querySelectorAll<FormControl>("[data-form-control]"));
+
+    if (!submitButton || !submitLabel || !status || !statusText) continue;
+    form.dataset.initialized = "true";
+
+    const message = (name: string, fallback: string): string =>
+      form.dataset[name] || fallback;
+
+    const setStatus = (state: StatusState, text: string, focus = false): void => {
+      status.hidden = false;
+      status.dataset.state = state;
+      status.setAttribute("role", state === "error" ? "alert" : "status");
+      status.setAttribute("aria-live", state === "error" ? "assertive" : "polite");
+      statusText.textContent = text;
+      if (focus) requestAnimationFrame(() => status.focus());
+    };
+
+    const setLoading = (loading: boolean): void => {
+      isSubmitting = loading;
+      submitButton.disabled = loading;
+      submitButton.setAttribute("aria-disabled", loading ? "true" : "false");
+      submitLabel.textContent = loading
+        ? submitButton.dataset.labelLoading || "Envoi en cours…"
+        : submitButton.dataset.labelIdle || "Envoyer";
+      form.setAttribute("aria-busy", loading ? "true" : "false");
+    };
+
+    const clearFieldError = (control: FormControl): void => {
+      control.removeAttribute("aria-invalid");
+      const error = control.closest<HTMLElement>("[data-form-field]")?.querySelector<HTMLElement>(
+        "[data-field-error]",
+      );
+      if (error) {
+        error.hidden = true;
+        error.textContent = "";
+      }
+    };
+
+    const reportInvalidFields = (): FormControl | undefined => {
+      let firstInvalid: FormControl | undefined;
+      for (const control of controls) {
+        clearFieldError(control);
+        if (control.validity.valid) continue;
+        firstInvalid ??= control;
+        control.setAttribute("aria-invalid", "true");
+        const error = control.closest<HTMLElement>("[data-form-field]")?.querySelector<HTMLElement>(
+          "[data-field-error]",
+        );
+        if (error) {
+          error.textContent = control.validationMessage;
+          error.hidden = false;
+        }
+      }
+      return firstInvalid;
+    };
+
+    const clearControlErrorFromEvent = (event: Event): void => {
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement
+      ) {
+        if (target.matches("[data-form-control]")) clearFieldError(target);
+      }
+    };
+
+    form.addEventListener("input", clearControlErrorFromEvent);
+    form.addEventListener("change", clearControlErrorFromEvent);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (isSubmitting) return;
+
+      if (form.dataset.configured !== "true") {
+        setStatus(
+          "error",
+          message(
+            "messageConfiguration",
+            "Configuration développeur Web3Forms manquante.",
+          ),
+          true,
+        );
+        return;
+      }
+
+      if (!form.checkValidity()) {
+        const firstInvalid = reportInvalidFields();
+        setStatus(
+          "error",
+          message("messageValidation", "Vérifiez les champs du formulaire."),
+        );
+        firstInvalid?.focus();
+        return;
+      }
+
+      if (form.dataset.captchaEnabled === "true") {
+        const captchaResponse = form.querySelector<HTMLTextAreaElement>(
+          'textarea[name="h-captcha-response"]',
+        );
+        const captchaError = form.querySelector<HTMLElement>("[data-captcha-error]");
+        if (!captchaResponse?.value) {
+          if (captchaError) {
+            captchaError.textContent = message(
+              "messageCaptcha",
+              "Veuillez compléter le captcha.",
+            );
+            captchaError.hidden = false;
+          }
+          form.querySelector<HTMLElement>("[data-captcha-field]")?.focus();
+          return;
+        }
+        if (captchaError) captchaError.hidden = true;
+      }
+
+      setLoading(true);
+      setStatus(
+        "loading",
+        message("messageLoading", "Votre demande est en cours d’envoi."),
+      );
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { Accept: "application/json" },
+        });
+        const result = (await response.json().catch(() => ({}))) as Web3FormsResponse;
+
+        if (!response.ok || result.success !== true) {
+          throw new Error("WEB3FORMS_SUBMISSION_FAILED");
+        }
+
+        form.reset();
+        for (const control of controls) clearFieldError(control);
+        setStatus(
+          "success",
+          message("messageSuccess", "Votre demande a bien été envoyée."),
+          true,
+        );
+
+        const successUrl = form.dataset.successUrl;
+        if (successUrl) window.setTimeout(() => window.location.assign(successUrl), 800);
+      } catch {
+        setStatus(
+          "error",
+          message("messageError", "Une erreur est survenue pendant l’envoi."),
+          true,
+        );
+      } finally {
+        setLoading(false);
+      }
+    });
+  }
+</script>

@@ -1,0 +1,191 @@
+---
+// TODO_LEGAL_REVIEW_BEFORE_PRODUCTION
+import { businessConfig } from "../config/business.config";
+import { featuresConfig } from "../config/features.config";
+import { contactFormConfig } from "../config/form.config";
+import { legalConfig } from "../config/legal.config";
+import LegalLayout from "../layouts/LegalLayout.astro";
+
+const configuredFormFields = [
+  contactFormConfig.fields.firstName.enabled && "prénom",
+  contactFormConfig.fields.lastName.enabled && "nom",
+  contactFormConfig.fields.phone.enabled && "numéro de téléphone",
+  contactFormConfig.fields.email.enabled && "adresse e-mail",
+  contactFormConfig.fields.service.enabled && "service ou type de demande",
+  contactFormConfig.fields.message.enabled && "contenu du message",
+  contactFormConfig.fields.consent.enabled && "preuve du consentement demandé par le formulaire",
+].filter((field): field is string => Boolean(field));
+---
+
+<!-- TODO_LEGAL_REVIEW_BEFORE_PRODUCTION -->
+<LegalLayout
+  title="Politique de confidentialité"
+  description="Informations relatives au traitement des données personnelles sur ce site."
+>
+  <aside
+    class="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+    role="note"
+    aria-labelledby="privacy-review-title"
+  >
+    <h2 id="privacy-review-title" class="text-h3">Validation juridique obligatoire</h2>
+    <p class="mt-3 font-semibold">TODO_LEGAL_REVIEW_BEFORE_PRODUCTION</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      Cette politique est un template technique à compléter selon les traitements réellement mis
+      en œuvre. Elle doit être vérifiée avant publication et ne constitue pas un conseil juridique.
+    </p>
+  </aside>
+
+  <section aria-labelledby="controller-title">
+    <h2 id="controller-title">Responsable du traitement</h2>
+    <p class="mt-4 safe-wrap">
+      {businessConfig.legalName}, exerçant sous le nom {businessConfig.tradeName}, à l’adresse
+      {" "}{businessConfig.address.formatted}.
+    </p>
+    <p class="mt-3 safe-wrap">Contact : {businessConfig.contact.email}</p>
+  </section>
+
+  <section aria-labelledby="collected-data-title">
+    <h2 id="collected-data-title">Données collectées</h2>
+    <p class="mt-4">Le formulaire est configuré pour recueillir les données suivantes :</p>
+    <ul class="mt-4 list-disc space-y-2 pl-6">
+      {configuredFormFields.map((field) => <li>{field}</li>)}
+    </ul>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.additionalCollectedData}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_PRIVACY_VERIFY_REQUIRED_OPTIONAL_FIELDS_AND_DATA_MINIMIZATION
+    </p>
+  </section>
+
+  <section aria-labelledby="form-processing-title">
+    <h2 id="form-processing-title">Formulaire de contact</h2>
+    <p class="mt-4">
+      Les données saisies sont utilisées pour recevoir, qualifier et traiter la demande adressée
+      par l’utilisateur.
+    </p>
+    <p class="mt-3 font-semibold">TODO_LEGAL_REVIEW_FORM_INFORMATION_NOTICE_AND_CONSENT_WORDING</p>
+  </section>
+
+  <section aria-labelledby="purposes-title">
+    <h2 id="purposes-title">Finalités du traitement</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.purposes}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_PRIVACY_LIST_EACH_PURPOSE_SEPARATELY_AND_REMOVE_UNUSED_PURPOSES
+    </p>
+  </section>
+
+  <section aria-labelledby="legal-basis-title">
+    <h2 id="legal-basis-title">Base légale</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.legalBasis}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      La base légale doit être déterminée pour chaque finalité réelle. Ne pas conserver une base
+      proposée par défaut sans validation juridique.
+    </p>
+  </section>
+
+  <section aria-labelledby="retention-title">
+    <h2 id="retention-title">Durée de conservation</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.retention}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      Définir une durée ou des critères de détermination adaptés à chaque finalité et vérifier les
+      éventuelles obligations d’archivage applicables.
+    </p>
+  </section>
+
+  <section aria-labelledby="recipients-title">
+    <h2 id="recipients-title">Destinataires</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.recipients}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_PRIVACY_IDENTIFY_INTERNAL_RECIPIENTS_PROCESSORS_AND_ACCESS_CONTROLS
+    </p>
+  </section>
+
+  <section aria-labelledby="web3forms-title">
+    <h2 id="web3forms-title">Web3Forms</h2>
+    <p class="mt-4">
+      Le formulaire utilise Web3Forms comme prestataire technique d’acheminement des demandes.
+    </p>
+    <p class="mt-3 font-semibold">{legalConfig.privacy.web3Forms}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      Vérifier les conditions, la documentation de confidentialité et les paramètres du compte
+      client au moment de la livraison.
+    </p>
+  </section>
+
+  <section aria-labelledby="hosting-privacy-title">
+    <h2 id="hosting-privacy-title">Hébergement</h2>
+    <p class="mt-4 safe-wrap">
+      Hébergeur configuré : {businessConfig.hostingProvider.name} —
+      {" "}{businessConfig.hostingProvider.address}.
+    </p>
+    <p class="mt-3 font-semibold">{legalConfig.privacy.hosting}</p>
+  </section>
+
+  <section aria-labelledby="rights-title">
+    <h2 id="rights-title">Droits des utilisateurs</h2>
+    <p class="mt-4">Selon le traitement concerné et les conditions légales applicables, une personne peut demander :</p>
+    <ul class="mt-4 list-disc space-y-2 pl-6">
+      <li>l’accès à ses données personnelles ;</li>
+      <li>la rectification de données inexactes ou incomplètes ;</li>
+      <li>la suppression de ses données ;</li>
+      <li>l’opposition à certains traitements ;</li>
+      <li>la limitation du traitement ;</li>
+      <li>la portabilité des données lorsqu’elle est applicable.</li>
+    </ul>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.portability}</p>
+    <p class="mt-3 font-semibold">{legalConfig.privacy.rightsExercise}</p>
+    <p class="mt-3">
+      Les demandes peuvent être adressées à
+      <span class="safe-wrap font-semibold">{businessConfig.contact.email}</span>.
+    </p>
+    <p class="mt-3 text-[var(--color-text-muted)]">
+      TODO_LEGAL_REVIEW_RIGHT_TO_WITHDRAW_CONSENT_AND_CNIL_COMPLAINT_INFORMATION
+    </p>
+  </section>
+
+  <section aria-labelledby="cookies-title">
+    <h2 id="cookies-title">Cookies et autres traceurs</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.cookies}</p>
+    {
+      featuresConfig.cookieBanner ? (
+        <p class="mt-3">TODO_COOKIE_BANNER_DESCRIBE_CATEGORIES_CHOICES_AND_RETENTION</p>
+      ) : (
+        <p class="mt-3 text-[var(--color-text-muted)]">
+          Aucune bannière cookie n’est activée dans le starter. Ne l’activer que si l’audit des
+          outils réellement installés conclut qu’un recueil du consentement est nécessaire.
+        </p>
+      )
+    }
+    <!-- TODO_COOKIE_BANNER_ARCHITECTURE: utiliser featuresConfig.cookieBanner après audit. -->
+  </section>
+
+  <section aria-labelledby="analytics-title">
+    <h2 id="analytics-title">Mesure d’audience et analytics</h2>
+    {
+      featuresConfig.analytics ? (
+        <p class="mt-4 font-semibold">{legalConfig.privacy.analytics}</p>
+      ) : (
+        <p class="mt-4">
+          Aucun outil analytics n’est activé dans la configuration initiale.
+          <span class="font-semibold"> {legalConfig.privacy.analytics}</span>
+        </p>
+      )
+    }
+  </section>
+
+  <section aria-labelledby="third-parties-title">
+    <h2 id="third-parties-title">Services tiers</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.thirdPartyServices}</p>
+    <ul class="mt-4 list-disc space-y-2 pl-6">
+      <li>Web3Forms pour l’acheminement du formulaire ;</li>
+      <li>{businessConfig.hostingProvider.name} pour l’hébergement ;</li>
+      {featuresConfig.captcha && <li>hCaptcha pour la protection anti-spam.</li>}
+      {featuresConfig.analytics && <li>TODO_ANALYTICS_PROVIDER_AND_PURPOSE</li>}
+    </ul>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.internationalTransfers}</p>
+  </section>
+
+  <section aria-labelledby="privacy-update-title">
+    <h2 id="privacy-update-title">Dernière mise à jour</h2>
+    <p class="mt-4 font-semibold">{legalConfig.privacy.lastUpdated}</p>
+  </section>
+</LegalLayout>

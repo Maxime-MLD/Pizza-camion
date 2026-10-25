@@ -1,0 +1,184 @@
+---
+import { businessConfig } from "../../config/business.config";
+import { navigationConfig } from "../../config/navigation.config";
+import type { NavigationItem } from "../../config/navigation.config";
+import { isNavigationItemActive } from "../../utils/navigation";
+
+export interface Props {
+  dialogId?: string;
+}
+
+const { dialogId = "mobile-navigation" } = Astro.props as Props;
+const currentPathname = Astro.url.pathname;
+const dialogTitleId = `${dialogId}-title`;
+const navigationItems: readonly NavigationItem[] = navigationConfig.items;
+---
+
+<div data-mobile-menu>
+  <button
+    type="button"
+    class="focus-ring tap-target inline-flex items-center justify-center rounded-[var(--radius-md)] lg:hidden"
+    aria-label={navigationConfig.labels.openMenu}
+    aria-controls={dialogId}
+    aria-expanded="false"
+    aria-haspopup="dialog"
+    data-mobile-menu-open
+  >
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      class="size-6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16"></path>
+    </svg>
+  </button>
+
+  <dialog
+    id={dialogId}
+    class="m-0 ml-auto h-dvh max-h-dvh w-[min(90vw,24rem)] max-w-none border-0 border-l border-[var(--color-border)] bg-[var(--color-surface)] p-0 text-[var(--color-text)] backdrop:bg-[var(--color-overlay)]"
+    aria-labelledby={dialogTitleId}
+    data-mobile-menu-dialog
+  >
+    <div class="flex min-h-full flex-col">
+      <div class="flex min-h-16 items-center justify-between gap-4 border-b border-[var(--color-border)] px-[var(--page-padding-mobile)]">
+        <a
+          href="/"
+          id={dialogTitleId}
+          class="safe-wrap font-display font-semibold no-underline"
+        >
+          {businessConfig.tradeName}
+        </a>
+        <button
+          type="button"
+          class="focus-ring tap-target inline-flex items-center justify-center rounded-[var(--radius-md)]"
+          aria-label={navigationConfig.labels.closeMenu}
+          data-mobile-menu-close
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            class="size-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+          >
+            <path d="m6 6 12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+      </div>
+
+      <nav
+        class="flex-1 overflow-y-auto px-[var(--page-padding-mobile)] py-8"
+        aria-label={navigationConfig.labels.mobileNavigation}
+      >
+        <ul class="m-0 flex list-none flex-col gap-2 p-0">
+          {
+            navigationItems.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-3 font-semibold no-underline aria-[current=page]:bg-[var(--color-primary)] aria-[current=page]:text-[var(--color-on-primary)]"
+                  aria-label={item.ariaLabel}
+                  aria-current={
+                    isNavigationItemActive(currentPathname, item.href, item.external)
+                      ? "page"
+                      : undefined
+                  }
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
+                  data-mobile-menu-link
+                >
+                  {item.label}
+                </a>
+
+                {item.children && item.children.length > 0 && (
+                  <ul class="m-0 list-none border-l border-[var(--color-border)] py-1 pl-4">
+                    {item.children.map((child) => (
+                      <li>
+                        <a
+                          href={child.href}
+                          class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small no-underline"
+                          aria-label={child.ariaLabel}
+                          target={child.external ? "_blank" : undefined}
+                          rel={child.external ? "noopener noreferrer" : undefined}
+                          data-mobile-menu-link
+                        >
+                          {child.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  function initializeMobileMenus() {
+    const menuRoots = document.querySelectorAll<HTMLElement>("[data-mobile-menu]");
+
+    menuRoots.forEach((menuRoot) => {
+      if (menuRoot.dataset.initialized === "true") {
+        return;
+      }
+
+      const openButton = menuRoot.querySelector<HTMLButtonElement>("[data-mobile-menu-open]");
+      const closeButton = menuRoot.querySelector<HTMLButtonElement>("[data-mobile-menu-close]");
+      const dialog = menuRoot.querySelector<HTMLDialogElement>("[data-mobile-menu-dialog]");
+
+      if (!openButton || !closeButton || !dialog) {
+        return;
+      }
+
+      const closeMenu = () => {
+        if (dialog.open) {
+          dialog.close();
+        }
+      };
+
+      openButton.addEventListener("click", () => {
+        dialog.showModal();
+        openButton.setAttribute("aria-expanded", "true");
+        closeButton.focus();
+      });
+
+      closeButton.addEventListener("click", closeMenu);
+
+      dialog.addEventListener("click", (event) => {
+        const target = event.target;
+        const clickedMenuLink =
+          target instanceof Element && target.closest("[data-mobile-menu-link]");
+
+        if (target === dialog || clickedMenuLink) {
+          closeMenu();
+        }
+      });
+
+      dialog.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeMenu();
+        }
+      });
+
+      dialog.addEventListener("close", () => {
+        openButton.setAttribute("aria-expanded", "false");
+        openButton.focus({ preventScroll: true });
+      });
+
+      menuRoot.dataset.initialized = "true";
+    });
+  }
+
+  initializeMobileMenus();
+</script>

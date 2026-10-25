@@ -1,0 +1,53 @@
+---
+import { testimonials } from "../../data/testimonials";
+import type { TestimonialItem } from "../../data/testimonials";
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+import SectionHeader from "../ui/SectionHeader.astro";
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "TODO_TESTIMONIALS_SECTION_TITLE",
+  description = "TODO_TESTIMONIALS_SECTION_DESCRIPTION",
+} = Astro.props as Props;
+
+const testimonialItems: readonly TestimonialItem[] = testimonials;
+const publishedTestimonials = testimonialItems.filter(
+  (testimonial) => testimonial.status === "published",
+);
+---
+
+<Section
+  id="testimonials"
+  spacing="lg"
+  width="full"
+  aria-labelledby="testimonials-title"
+>
+  <Container>
+    <!-- TODO_TESTIMONIALS_SECTION: ne publier que des témoignages réels et autorisés. -->
+    <SectionHeader title={title} description={description} headingId="testimonials-title" />
+
+    {
+      publishedTestimonials.length > 0 && (
+        <ul class="mt-10 grid min-w-0 list-none gap-6 p-0 md:grid-cols-2 lg:grid-cols-3">
+          {publishedTestimonials.map((testimonial) => (
+            <li class="min-w-0">
+              <figure class="safe-wrap h-full rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6">
+                <blockquote>
+                  <p>{testimonial.quote}</p>
+                </blockquote>
+                <figcaption class="mt-4 text-small text-[var(--color-text-muted)]">
+                  {testimonial.authorName}
+                </figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </Container>
+</Section>

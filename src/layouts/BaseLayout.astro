@@ -1,0 +1,76 @@
+---
+import Footer from "../components/layout/Footer.astro";
+import Navbar from "../components/layout/Navbar.astro";
+import SEO from "../components/seo/SEO.astro";
+import { featuresConfig } from "../config/features.config";
+import { siteConfig } from "../config/site.config";
+import type { PageSeoProps } from "../types/seo";
+import "../styles/global.css";
+
+type NavbarVariant = "default" | "transparent" | "light" | "dark";
+
+export interface Props extends PageSeoProps {
+  navbarVariant?: NavbarVariant;
+  navbarSticky?: boolean;
+  navbarHideOnScroll?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  image,
+  noindex,
+  nofollow,
+  type,
+  breadcrumbs,
+  navbarVariant = "default",
+  navbarSticky = false,
+  navbarHideOnScroll = false,
+  bodyClass,
+} = Astro.props as Props;
+---
+
+<!doctype html>
+<html
+  lang={siteConfig.language}
+  data-smooth-scroll={featuresConfig.smoothScroll ? "true" : "false"}
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <SEO
+      title={title}
+      description={description}
+      canonical={canonical}
+      image={image}
+      noindex={noindex}
+      nofollow={nofollow}
+      type={type}
+      breadcrumbs={breadcrumbs}
+      pathname={Astro.url.pathname}
+    />
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a
+      href="#main-content"
+      class="focus-ring fixed top-4 left-4 z-[100] -translate-y-24 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-3 font-semibold text-[var(--color-on-primary)] no-underline focus:translate-y-0"
+    >
+      Aller au contenu principal
+    </a>
+
+    <Navbar
+      variant={navbarVariant}
+      sticky={navbarSticky}
+      hideOnScroll={navbarHideOnScroll}
+    />
+
+    <main id="main-content" class="min-h-[50vh]" tabindex="-1">
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>

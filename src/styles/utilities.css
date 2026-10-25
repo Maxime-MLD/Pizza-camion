@@ -1,0 +1,18 @@
+@utility safe-wrap {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@utility tap-target {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+@utility focus-ring {
+  outline: 0.125rem solid transparent;
+  outline-offset: 0.25rem;
+
+  &:focus-visible {
+    outline-color: var(--color-accent);
+  }
+}

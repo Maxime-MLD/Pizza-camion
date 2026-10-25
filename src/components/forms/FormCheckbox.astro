@@ -1,0 +1,57 @@
+---
+export interface Props {
+  id: string;
+  name: string;
+  label: string;
+  linkHref?: string;
+  linkLabel?: string;
+  required?: boolean;
+  value?: string;
+  class?: string;
+}
+
+const {
+  id,
+  name,
+  label,
+  linkHref,
+  linkLabel,
+  required = false,
+  value = "accepted",
+  class: className,
+} = Astro.props as Props;
+
+const errorId = `${id}-error`;
+---
+
+<div class:list={["min-w-0", className]} data-form-field>
+  <div class="flex min-w-0 items-start gap-3">
+    <input
+      id={id}
+      name={name}
+      type="checkbox"
+      value={value}
+      required={required}
+      aria-describedby={errorId}
+      class="focus-ring mt-1 size-5 shrink-0 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] accent-[var(--color-primary)]"
+      data-form-control
+    />
+    <label class="safe-wrap text-small" for={id}>
+      {label}{" "}
+      {
+        linkHref && linkLabel && (
+          <a class="focus-ring rounded-[var(--radius-sm)] font-semibold" href={linkHref}>
+            {linkLabel}
+          </a>
+        )
+      }
+      {required && <span aria-hidden="true"> *</span>}
+    </label>
+  </div>
+  <p
+    id={errorId}
+    class="mt-2 text-small font-semibold text-[var(--color-text)]"
+    data-field-error
+    hidden
+  ></p>
+</div>

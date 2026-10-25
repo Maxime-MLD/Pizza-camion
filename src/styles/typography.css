@@ -1,0 +1,78 @@
+@layer base {
+  body {
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  :where(h1, h2, h3, h4, h5, h6, p) {
+    margin: 0;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-heading);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--font-size-h1);
+    line-height: var(--line-height-heading);
+  }
+
+  h2 {
+    font-size: var(--font-size-h2);
+    line-height: 1.1;
+  }
+
+  h3 {
+    font-size: var(--font-size-h3);
+    line-height: 1.15;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility font-body {
+  font-family: var(--font-body);
+}
+
+@utility text-h1 {
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+@utility text-h2 {
+  font-size: var(--font-size-h2);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-heading);
+}
+
+@utility text-h3 {
+  font-size: var(--font-size-h3);
+  line-height: 1.15;
+  letter-spacing: var(--tracking-heading);
+}
+
+@utility text-body-lg {
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body);
+}
+
+@utility text-body {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+@utility text-small {
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+}

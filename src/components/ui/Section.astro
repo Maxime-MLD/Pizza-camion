@@ -1,0 +1,51 @@
+---
+import Container from "./Container.astro";
+
+type SectionSpacing = "none" | "sm" | "md" | "lg" | "xl";
+type SectionWidth = "normal" | "full";
+
+export interface Props {
+  id?: string;
+  spacing?: SectionSpacing;
+  width?: SectionWidth;
+  class?: string;
+  containerClass?: string;
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+}
+
+const spacingClasses: Record<SectionSpacing, string> = {
+  none: "py-0",
+  sm: "py-[var(--section-space-sm)]",
+  md: "py-[var(--section-space-md)]",
+  lg: "py-[var(--section-space-lg)]",
+  xl: "py-[var(--section-space-xl)]",
+};
+
+const {
+  id,
+  spacing = "md",
+  width = "normal",
+  class: className,
+  containerClass,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledby,
+} = Astro.props as Props;
+---
+
+<section
+  id={id}
+  class:list={["w-full min-w-0", spacingClasses[spacing], className]}
+  aria-label={ariaLabel}
+  aria-labelledby={ariaLabelledby}
+>
+  {
+    width === "full" ? (
+      <slot />
+    ) : (
+      <Container class={containerClass}>
+        <slot />
+      </Container>
+    )
+  }
+</section>

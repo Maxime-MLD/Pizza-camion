@@ -1,0 +1,123 @@
+---
+// TODO_LEGAL_REVIEW_BEFORE_PRODUCTION
+import { businessConfig } from "../config/business.config";
+import { legalConfig } from "../config/legal.config";
+import LegalLayout from "../layouts/LegalLayout.astro";
+
+const ownerName = `${businessConfig.owner.firstName} ${businessConfig.owner.lastName}`;
+const legalIdentifiers = businessConfig.legalIdentifiers;
+const hostingProvider = businessConfig.hostingProvider;
+---
+
+<!-- TODO_LEGAL_REVIEW_BEFORE_PRODUCTION -->
+<LegalLayout
+  title="Mentions légales"
+  description="Informations légales relatives à l’éditeur et au fonctionnement du site."
+>
+  <aside
+    class="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+    role="note"
+    aria-labelledby="legal-review-title"
+  >
+    <h2 id="legal-review-title" class="text-h3">Validation juridique obligatoire</h2>
+    <p class="mt-3 font-semibold">TODO_LEGAL_REVIEW_BEFORE_PRODUCTION</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      Ce document est un template technique. Il doit être adapté au client et validé par un
+      professionnel compétent avant toute mise en production. Il ne constitue pas un conseil
+      juridique.
+    </p>
+  </aside>
+
+  <section aria-labelledby="publisher-title">
+    <h2 id="publisher-title">Éditeur du site</h2>
+    <dl class="mt-5 grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-[minmax(10rem,0.6fr)_minmax(0,1.4fr)]">
+      <dt class="font-semibold">Nom commercial</dt>
+      <dd class="safe-wrap">{businessConfig.tradeName}</dd>
+
+      <dt class="font-semibold">Raison sociale</dt>
+      <dd class="safe-wrap">{businessConfig.legalName}</dd>
+
+      <dt class="font-semibold">Forme juridique</dt>
+      <dd class="safe-wrap">{legalIdentifiers.legalForm}</dd>
+
+      {
+        legalIdentifiers.soleTrader.enabled && (
+          <>
+            <dt class="font-semibold">Entrepreneur individuel</dt>
+            <dd class="safe-wrap">{legalIdentifiers.soleTrader.legalNotice}</dd>
+          </>
+        )
+      }
+
+      <dt class="font-semibold">Dirigeant</dt>
+      <dd class="safe-wrap">{ownerName}</dd>
+
+      <dt class="font-semibold">Adresse</dt>
+      <dd class="safe-wrap">{businessConfig.address.formatted}</dd>
+
+      <dt class="font-semibold">E-mail</dt>
+      <dd class="safe-wrap">{businessConfig.contact.email}</dd>
+
+      <dt class="font-semibold">Téléphone</dt>
+      <dd class="safe-wrap">{businessConfig.contact.phoneDisplay}</dd>
+
+      <dt class="font-semibold">SIREN</dt>
+      <dd class="safe-wrap">{legalIdentifiers.siren}</dd>
+
+      <dt class="font-semibold">SIRET</dt>
+      <dd class="safe-wrap">{legalIdentifiers.siret}</dd>
+
+      <dt class="font-semibold">Numéro de TVA</dt>
+      <dd class="safe-wrap">{legalIdentifiers.vatNumber}</dd>
+    </dl>
+  </section>
+
+  <section aria-labelledby="publication-title">
+    <h2 id="publication-title">Responsable de la publication</h2>
+    <p class="mt-4 safe-wrap">{businessConfig.publicationDirector}</p>
+  </section>
+
+  <section aria-labelledby="hosting-title">
+    <h2 id="hosting-title">Hébergement</h2>
+    <p class="mt-4 font-semibold">{legalConfig.notice.hostingVerification}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      Vérifier au moment de la livraison les informations légales publiées par l’hébergeur
+      réellement utilisé. Ne pas réutiliser automatiquement d’anciennes coordonnées, notamment
+      si le site est déployé sur Vercel.
+    </p>
+    <dl class="mt-5 grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-[minmax(10rem,0.6fr)_minmax(0,1.4fr)]">
+      <dt class="font-semibold">Hébergeur</dt>
+      <dd class="safe-wrap">{hostingProvider.name}</dd>
+      <dt class="font-semibold">Adresse</dt>
+      <dd class="safe-wrap">{hostingProvider.address}</dd>
+      <dt class="font-semibold">Téléphone</dt>
+      <dd class="safe-wrap">{hostingProvider.phone}</dd>
+      <dt class="font-semibold">Site internet</dt>
+      <dd class="safe-wrap">{hostingProvider.website}</dd>
+    </dl>
+  </section>
+
+  <section aria-labelledby="intellectual-property-title">
+    <h2 id="intellectual-property-title">Propriété intellectuelle</h2>
+    <p class="mt-4 font-semibold">{legalConfig.notice.intellectualProperty}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_LEGAL_REVIEW_OWNERSHIP_LICENSES_CREDITS_AND_REUSE_RULES
+    </p>
+  </section>
+
+  <section aria-labelledby="liability-title">
+    <h2 id="liability-title">Responsabilité</h2>
+    <p class="mt-4 font-semibold">{legalConfig.notice.liability}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_LEGAL_REVIEW_SCOPE_LIMITATIONS_AND_APPLICABLE_MANDATORY_RULES
+    </p>
+  </section>
+
+  <section aria-labelledby="external-links-title">
+    <h2 id="external-links-title">Liens externes</h2>
+    <p class="mt-4 font-semibold">{legalConfig.notice.externalLinks}</p>
+    <p class="mt-2 text-[var(--color-text-muted)]">
+      TODO_LEGAL_REVIEW_EXTERNAL_LINKS_MONITORING_AND_THIRD_PARTY_RESPONSIBILITY
+    </p>
+  </section>
+</LegalLayout>

@@ -1,0 +1,74 @@
+---
+import { seoConfig } from "../../config/seo.config";
+import { siteConfig } from "../../config/site.config";
+import type { BreadcrumbItem, PageSeoProps } from "../../types/seo";
+import { buildSeoGraph, isUsableSeoValue, resolveSeo } from "../../utils/seo";
+import JsonLd from "./JsonLd.astro";
+
+export interface Props extends PageSeoProps {
+  pathname: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  image,
+  noindex = false,
+  nofollow = false,
+  type,
+  pathname,
+  breadcrumbs = [] as readonly BreadcrumbItem[],
+} = Astro.props as Props;
+
+const resolved = resolveSeo(
+  { title, description, canonical, image, noindex, nofollow, type, breadcrumbs },
+  pathname,
+);
+const resolvedBreadcrumbs =
+  breadcrumbs.length > 0
+    ? breadcrumbs
+    : pathname !== "/"
+      ? [
+          { name: "Accueil", url: "/" },
+          { name: title ?? "", url: pathname },
+        ]
+      : [];
+const structuredData = buildSeoGraph(resolved, pathname, resolvedBreadcrumbs);
+const configuredKeywords: readonly string[] = seoConfig.keywords;
+const keywords = configuredKeywords.filter(isUsableSeoValue);
+---
+
+<title>{resolved.title}</title>
+<meta name="description" content={resolved.description} />
+<link rel="canonical" href={resolved.canonical} />
+<meta name="robots" content={resolved.robots} />
+<meta name="googlebot" content={resolved.googleBot} />
+<meta name="author" content={siteConfig.author} />
+<meta name="theme-color" content={siteConfig.themeColor} />
+{keywords.length > 0 && <meta name="keywords" content={keywords.join(", ")} />}
+
+<link rel="icon" href={siteConfig.icons.favicon} type="image/svg+xml" />
+<link rel="icon" href={siteConfig.icons.faviconPng} type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href={siteConfig.icons.appleTouchIcon} sizes="180x180" />
+<link rel="manifest" href={siteConfig.manifest.path} />
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+<meta property="og:title" content={resolved.title} />
+<meta property="og:description" content={resolved.description} />
+<meta property="og:type" content={resolved.type} />
+<meta property="og:url" content={resolved.canonical} />
+<meta property="og:site_name" content={seoConfig.openGraph.siteName} />
+<meta property="og:locale" content={seoConfig.openGraph.locale} />
+<meta property="og:image" content={resolved.image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={resolved.title} />
+
+<meta name="twitter:card" content={seoConfig.twitter.card} />
+<meta name="twitter:title" content={resolved.title} />
+<meta name="twitter:description" content={resolved.description} />
+<meta name="twitter:image" content={resolved.twitterImage} />
+<meta name="twitter:image:alt" content={resolved.title} />
+
+<JsonLd data={structuredData} />

@@ -1,0 +1,52 @@
+---
+import { businessConfig } from "../../config/business.config";
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+
+export interface Props {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  fullHeight?: boolean;
+}
+
+const {
+  eyebrow = businessConfig.activity,
+  title = businessConfig.tradeName,
+  description = businessConfig.shortDescription,
+  fullHeight = false,
+} = Astro.props as Props;
+
+const hasMedia = Astro.slots.has("media");
+---
+
+<Section id="hero" spacing="none" width="full" aria-labelledby="hero-title">
+  <Container>
+    <div
+      class:list={[
+        "grid min-w-0 gap-8 py-[var(--section-space-lg)] lg:gap-12",
+        hasMedia && "lg:grid-cols-2",
+        fullHeight && "min-h-[calc(100svh-4rem)] items-center",
+      ]}
+    >
+      <div class="safe-wrap max-w-3xl">
+        <p class="text-small font-semibold tracking-[0.08em] text-[var(--color-text-muted)] uppercase">
+          {eyebrow}
+        </p>
+        <h1 id="hero-title" class="mt-4">{title}</h1>
+        <p class="mt-6 max-w-2xl text-body-lg text-[var(--color-text-muted)]">
+          {description}
+        </p>
+      </div>
+
+      {
+        hasMedia && (
+          <div class="min-w-0" data-hero-media>
+            <!-- TODO_HERO_MEDIA: ajouter le média client prévu pour cette section. -->
+            <slot name="media" />
+          </div>
+        )
+      }
+    </div>
+  </Container>
+</Section>

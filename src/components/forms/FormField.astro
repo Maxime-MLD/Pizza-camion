@@ -1,0 +1,77 @@
+---
+type FieldType = "text" | "email" | "tel";
+type AutoComplete =
+  | "given-name"
+  | "family-name"
+  | "email"
+  | "tel"
+  | "organization"
+  | "off";
+
+export interface Props {
+  id: string;
+  name: string;
+  label: string;
+  type?: FieldType;
+  autocomplete?: AutoComplete;
+  required?: boolean;
+  inputmode?: "text" | "email" | "tel";
+  minlength?: number;
+  maxlength?: number;
+  pattern?: string;
+  helpText?: string;
+  class?: string;
+}
+
+const {
+  id,
+  name,
+  label,
+  type = "text",
+  autocomplete = "off",
+  required = false,
+  inputmode,
+  minlength,
+  maxlength,
+  pattern,
+  helpText,
+  class: className,
+} = Astro.props as Props;
+
+const helpId = helpText ? `${id}-help` : undefined;
+const errorId = `${id}-error`;
+const describedBy = [helpId, errorId].filter(Boolean).join(" ");
+---
+
+<div class:list={["min-w-0", className]} data-form-field>
+  <label class="safe-wrap block font-semibold" for={id}>
+    {label}{required && <span aria-hidden="true"> *</span>}
+  </label>
+  {
+    helpText && (
+      <p id={helpId} class="mt-1 text-small text-[var(--color-text-muted)]">
+        {helpText}
+      </p>
+    )
+  }
+  <input
+    id={id}
+    name={name}
+    type={type}
+    autocomplete={autocomplete}
+    required={required}
+    inputmode={inputmode}
+    minlength={minlength}
+    maxlength={maxlength}
+    pattern={pattern}
+    aria-describedby={describedBy || undefined}
+    class="focus-ring mt-2 min-h-12 w-full min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-3 text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+    data-form-control
+  />
+  <p
+    id={errorId}
+    class="mt-2 text-small font-semibold text-[var(--color-text)]"
+    data-field-error
+    hidden
+  ></p>
+</div>

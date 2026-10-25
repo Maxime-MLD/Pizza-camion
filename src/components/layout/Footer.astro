@@ -1,0 +1,141 @@
+---
+import { businessConfig } from "../../config/business.config";
+import { navigationConfig } from "../../config/navigation.config";
+import { createMailtoHref, createTelHref } from "../../utils/links";
+import { isPlaceholderValue } from "../../utils/placeholders";
+import Container from "../ui/Container.astro";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props as Props;
+const currentYear = new Date().getFullYear();
+const configuredSocialLinks = businessConfig.socialLinks.filter(
+  (socialLink) => !isPlaceholderValue(socialLink.url),
+);
+const phoneHref = createTelHref(businessConfig.contact.phoneNormalized);
+const emailHref = createMailtoHref(businessConfig.contact.email);
+---
+
+<footer
+  class:list={[
+    "border-t border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
+    className,
+  ]}
+>
+  <Container class="py-[var(--section-space-sm)]">
+    <div class="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-4">
+      <div class="safe-wrap lg:col-span-1">
+        <a href="/" class="font-display text-body-lg font-semibold no-underline">
+          {businessConfig.tradeName}
+        </a>
+        <p class="mt-4 text-small text-[var(--color-text-muted)]">
+          {businessConfig.shortDescription}
+        </p>
+      </div>
+
+      <nav aria-label={navigationConfig.labels.footerNavigation}>
+        <h2 class="font-body text-small font-semibold tracking-[0.08em] uppercase">
+          Navigation
+        </h2>
+        <ul class="mt-4 flex list-none flex-col gap-2 p-0 text-small">
+          {
+            navigationConfig.items.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="focus-ring safe-wrap inline-block rounded-[var(--radius-sm)] no-underline hover:underline"
+                  aria-label={item.ariaLabel}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="safe-wrap">
+        <h2 class="font-body text-small font-semibold tracking-[0.08em] uppercase">
+          Contact
+        </h2>
+        <address class="mt-4 flex flex-col gap-2 text-small not-italic">
+          {
+            phoneHref ? (
+              <a
+                href={phoneHref}
+                class="focus-ring rounded-[var(--radius-sm)] no-underline hover:underline"
+              >
+                {businessConfig.contact.phoneDisplay}
+              </a>
+            ) : (
+              <span>{businessConfig.contact.phoneDisplay}</span>
+            )
+          }
+          {
+            emailHref ? (
+              <a
+                href={emailHref}
+                class="focus-ring rounded-[var(--radius-sm)] no-underline hover:underline"
+              >
+                {businessConfig.contact.email}
+              </a>
+            ) : (
+              <span>{businessConfig.contact.email}</span>
+            )
+          }
+          <span>{businessConfig.address.formatted}</span>
+        </address>
+      </div>
+
+      <nav aria-label={navigationConfig.labels.legalNavigation}>
+        <h2 class="font-body text-small font-semibold tracking-[0.08em] uppercase">
+          Informations légales
+        </h2>
+        <ul class="mt-4 flex list-none flex-col gap-2 p-0 text-small">
+          {
+            navigationConfig.legalItems.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="focus-ring safe-wrap inline-block rounded-[var(--radius-sm)] no-underline hover:underline"
+                  aria-label={item.ariaLabel}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+
+    {
+      configuredSocialLinks.length > 0 && (
+        <nav class="mt-10" aria-label="Réseaux sociaux">
+          <ul class="flex list-none flex-wrap gap-4 p-0 text-small">
+            {configuredSocialLinks.map((socialLink) => (
+              <li>
+                <a
+                  href={socialLink.url}
+                  class="focus-ring rounded-[var(--radius-sm)] no-underline hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {socialLink.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    <p class="mt-10 border-t border-[var(--color-border)] pt-6 text-small text-[var(--color-text-muted)]">
+      © {currentYear} {businessConfig.legalName}. Tous droits réservés.
+    </p>
+  </Container>
+</footer>

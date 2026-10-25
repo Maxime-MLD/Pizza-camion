@@ -1,0 +1,20 @@
+---
+export interface Props {
+  id?: string;
+}
+
+const { id = "contact-form-status" } = Astro.props as Props;
+---
+
+<div
+  id={id}
+  class="safe-wrap rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-small font-semibold"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  tabindex="-1"
+  data-form-status
+  hidden
+>
+  <p data-form-status-text></p>
+</div>

@@ -1,0 +1,98 @@
+---
+type ButtonVariant = "primary" | "secondary" | "text";
+type ButtonSize = "sm" | "md" | "lg";
+type IconPosition = "start" | "end";
+
+export interface Props {
+  href?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  target?: "_self" | "_blank" | "_parent" | "_top";
+  rel?: string;
+  ariaLabel?: string;
+  iconPosition?: IconPosition;
+  class?: string;
+}
+
+const variantClasses: Record<ButtonVariant, string> = {
+  primary: "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:opacity-90",
+  secondary:
+    "border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-text)]",
+  text: "text-[var(--color-primary)] underline decoration-transparent hover:decoration-current",
+};
+
+const sizeClasses: Record<ButtonSize, string> = {
+  sm: "px-4 py-2 text-small",
+  md: "px-5 py-2.5 text-body",
+  lg: "px-6 py-3 text-body-lg",
+};
+
+const {
+  href,
+  variant = "primary",
+  size = "md",
+  type = "button",
+  disabled = false,
+  target,
+  rel,
+  ariaLabel,
+  iconPosition = "start",
+  class: className,
+} = Astro.props as Props;
+
+const hasIcon = Astro.slots.has("icon");
+const safeRel = target === "_blank" ? rel ?? "noopener noreferrer" : rel;
+const classes = [
+  "focus-ring tap-target inline-flex max-w-full items-center justify-center gap-2 rounded-[var(--radius-md)] text-center font-semibold no-underline disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+  variantClasses[variant],
+  sizeClasses[size],
+  className,
+];
+---
+
+{
+  href ? (
+    <a
+      href={disabled ? undefined : href}
+      class:list={classes}
+      target={target}
+      rel={safeRel}
+      aria-label={ariaLabel}
+      aria-disabled={disabled ? "true" : undefined}
+      tabindex={disabled ? -1 : undefined}
+    >
+      {hasIcon && iconPosition === "start" && (
+        <span class="pointer-events-none shrink-0 [&>svg]:size-[1em]" aria-hidden="true">
+          <slot name="icon" />
+        </span>
+      )}
+      <span class="safe-wrap"><slot /></span>
+      {hasIcon && iconPosition === "end" && (
+        <span class="pointer-events-none shrink-0 [&>svg]:size-[1em]" aria-hidden="true">
+          <slot name="icon" />
+        </span>
+      )}
+    </a>
+  ) : (
+    <button
+      class:list={classes}
+      type={type}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
+      {hasIcon && iconPosition === "start" && (
+        <span class="pointer-events-none shrink-0 [&>svg]:size-[1em]" aria-hidden="true">
+          <slot name="icon" />
+        </span>
+      )}
+      <span class="safe-wrap"><slot /></span>
+      {hasIcon && iconPosition === "end" && (
+        <span class="pointer-events-none shrink-0 [&>svg]:size-[1em]" aria-hidden="true">
+          <slot name="icon" />
+        </span>
+      )}
+    </button>
+  )
+}

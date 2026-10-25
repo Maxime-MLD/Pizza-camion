@@ -1,0 +1,59 @@
+---
+export interface Props {
+  id: string;
+  name: string;
+  label: string;
+  required?: boolean;
+  rows?: number;
+  minlength?: number;
+  maxlength?: number;
+  helpText?: string;
+  class?: string;
+}
+
+const {
+  id,
+  name,
+  label,
+  required = false,
+  rows = 7,
+  minlength,
+  maxlength,
+  helpText,
+  class: className,
+} = Astro.props as Props;
+
+const helpId = helpText ? `${id}-help` : undefined;
+const errorId = `${id}-error`;
+const describedBy = [helpId, errorId].filter(Boolean).join(" ");
+---
+
+<div class:list={["min-w-0", className]} data-form-field>
+  <label class="safe-wrap block font-semibold" for={id}>
+    {label}{required && <span aria-hidden="true"> *</span>}
+  </label>
+  {
+    helpText && (
+      <p id={helpId} class="mt-1 text-small text-[var(--color-text-muted)]">
+        {helpText}
+      </p>
+    )
+  }
+  <textarea
+    id={id}
+    name={name}
+    required={required}
+    rows={rows}
+    minlength={minlength}
+    maxlength={maxlength}
+    aria-describedby={describedBy || undefined}
+    class="focus-ring mt-2 w-full min-w-0 resize-y rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-3 text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+    data-form-control
+  ></textarea>
+  <p
+    id={errorId}
+    class="mt-2 text-small font-semibold text-[var(--color-text)]"
+    data-field-error
+    hidden
+  ></p>
+</div>

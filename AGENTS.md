@@ -1,0 +1,24 @@
+# Conventions du projet
+
+- Utiliser Astro en priorité et conserver Astro comme framework principal.
+- Privilégier les composants `.astro` ; utiliser React uniquement lorsqu'une contrainte technique réelle le justifie.
+- Conserver un seul composant par fichier.
+- Maintenir la Navbar indépendante du Hero.
+- Maintenir le Footer indépendant des autres sections.
+- Ne hardcoder aucune donnée client dans un composant.
+- Ne hardcoder aucune couleur client dans une section.
+- Faire provenir toutes les informations client des fichiers de `src/config/` ou `src/data/`.
+- Préfixer toute valeur à remplacer pour un client par `TODO_`.
+- Utiliser exclusivement Tailwind CSS 4 dans les composants ; ne pas ajouter de CSS classique dans les fichiers composants.
+- Éviter les styles inline ; toute exception dynamique doit être nécessaire, localisée et justifiée par un commentaire.
+- Maintenir TypeScript en mode strict.
+- Concevoir le responsive en mobile-first.
+- Utiliser un HTML sémantique et accessible.
+- Préserver les performances et éviter le JavaScript inutile.
+- Importer les images de contenu depuis `src/assets/` et utiliser `ResponsiveImage.astro` lorsqu'une optimisation Astro est pertinente.
+- Réserver `priority` à l'image LCP ; charger paresseusement les images hors écran et toujours fournir des dimensions ainsi qu'un `alt` explicite.
+- Limiter les fichiers et graisses de polices ; ne précharger qu'une police locale réellement critique.
+- Éviter les dépendances inutiles.
+- N'imposer aucune animation au design ; toute animation doit répondre au besoin du client et respecter les préférences de mouvement réduit.
+- Ne stocker aucun secret dans le repository.
+- Conserver les composants simples, ciblés et réutilisables.

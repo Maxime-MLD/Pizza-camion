@@ -1,0 +1,30 @@
+---
+import Button from "../components/ui/Button.astro";
+import Section from "../components/ui/Section.astro";
+import SectionHeader from "../components/ui/SectionHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="TODO_THANK_YOU_PAGE_TITLE"
+  description="TODO_THANK_YOU_PAGE_META_DESCRIPTION"
+  noindex
+  navbarVariant="light"
+>
+  <!-- TODO_ANALYTICS_CONVERSION: ajouter le suivi uniquement lorsque le client l’active. -->
+  <Section spacing="lg" aria-labelledby="thank-you-title">
+    <div class="mx-auto max-w-3xl text-center">
+      <SectionHeader
+        eyebrow="TODO_THANK_YOU_EYEBROW"
+        title="TODO_THANK_YOU_H1"
+        description="TODO_THANK_YOU_MESSAGE"
+        level={1}
+        headingId="thank-you-title"
+        align="center"
+      />
+      <div class="mt-8">
+        <Button href="/" variant="primary">Retour à l’accueil</Button>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

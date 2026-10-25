@@ -1,0 +1,54 @@
+---
+import { businessConfig } from "../../config/business.config";
+import { createMailtoHref, createTelHref } from "../../utils/links";
+import ContactForm from "../forms/ContactForm.astro";
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+import SectionHeader from "../ui/SectionHeader.astro";
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "TODO_CONTACT_SECTION_TITLE",
+  description = "TODO_CONTACT_SECTION_DESCRIPTION",
+} = Astro.props as Props;
+const phoneHref = createTelHref(businessConfig.contact.phoneNormalized);
+const emailHref = createMailtoHref(businessConfig.contact.email);
+---
+
+<Section id="contact" spacing="lg" width="full" aria-labelledby="contact-title">
+  <Container>
+    <div class="grid min-w-0 gap-10 lg:grid-cols-2">
+      <div class="min-w-0">
+        <SectionHeader title={title} description={description} headingId="contact-title" />
+
+        <address class="safe-wrap mt-8 flex min-w-0 flex-col gap-3 not-italic">
+          {
+            phoneHref ? (
+              <a class="focus-ring rounded-[var(--radius-sm)]" href={phoneHref}>
+                {businessConfig.contact.phoneDisplay}
+              </a>
+            ) : (
+              <span>{businessConfig.contact.phoneDisplay}</span>
+            )
+          }
+          {
+            emailHref ? (
+              <a class="focus-ring rounded-[var(--radius-sm)]" href={emailHref}>
+                {businessConfig.contact.email}
+              </a>
+            ) : (
+              <span>{businessConfig.contact.email}</span>
+            )
+          }
+          <p>{businessConfig.address.formatted}</p>
+        </address>
+      </div>
+
+      <ContactForm />
+    </div>
+  </Container>
+</Section>

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./fonts.css";
+@import "./typography.css";
+@import "./utilities.css";
+@import "./animations.css";
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    background: var(--color-background);
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100svh;
+    margin: 0;
+    overflow-x: clip;
+    background: var(--color-background);
+    color: var(--color-text);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :where(main, section, article, aside, header, footer, nav) {
+    min-width: 0;
+  }
+
+  :where(img, picture, video, canvas, svg) {
+    display: block;
+    max-width: 100%;
+  }
+
+  :where(img, video) {
+    height: auto;
+  }
+
+  :where(button, input, select, textarea) {
+    font: inherit;
+  }
+
+  :where(button, [role="button"]) {
+    touch-action: manipulation;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  :focus-visible {
+    outline: 0.125rem solid var(--color-accent);
+    outline-offset: 0.25rem;
+  }
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: CanvasText;
+  }
+}

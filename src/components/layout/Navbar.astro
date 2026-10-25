@@ -1,0 +1,132 @@
+---
+import { navigationConfig } from "../../config/navigation.config";
+import type { NavigationItem } from "../../config/navigation.config";
+import { siteConfig } from "../../config/site.config";
+import { isNavigationItemActive } from "../../utils/navigation";
+import Container from "../ui/Container.astro";
+import MobileMenu from "./MobileMenu.astro";
+
+type NavbarVariant = "default" | "transparent" | "light" | "dark";
+
+export interface Props {
+  variant?: NavbarVariant;
+  sticky?: boolean;
+  hideOnScroll?: boolean;
+  class?: string;
+}
+
+const variantClasses: Record<NavbarVariant, string> = {
+  default:
+    "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)]",
+  transparent: "border-transparent bg-transparent text-[var(--color-text)]",
+  light: "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
+  dark: "border-transparent bg-[var(--color-primary)] text-[var(--color-on-primary)]",
+};
+
+const {
+  variant = "default",
+  sticky = false,
+  hideOnScroll = false,
+  class: className,
+} = Astro.props as Props;
+
+const currentPathname = Astro.url.pathname;
+const navigationItems: readonly NavigationItem[] = navigationConfig.items;
+---
+
+<header
+  class:list={[
+    "z-50 w-full border-b",
+    sticky && "sticky top-0",
+    variantClasses[variant],
+    className,
+  ]}
+  data-navbar
+  data-navbar-variant={variant}
+  data-hide-on-scroll={hideOnScroll ? "true" : "false"}
+>
+  <Container class="flex min-h-16 items-center justify-between gap-6">
+    <a href="/" class="safe-wrap font-display font-semibold no-underline">
+      {siteConfig.name}
+    </a>
+
+    <nav
+      class="hidden lg:block"
+      aria-label={navigationConfig.labels.primaryNavigation}
+    >
+      <ul class="m-0 flex list-none items-center gap-1 p-0">
+        {
+          navigationItems.map((item) => (
+            <li>
+              {item.children && item.children.length > 0 ? (
+                <details class="group relative">
+                  <summary class="focus-ring flex cursor-pointer list-none items-center gap-1 rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold [&::-webkit-details-marker]:hidden">
+                    {item.label}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 16 16"
+                      class="size-4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="m4 6 4 4 4-4"></path>
+                    </svg>
+                  </summary>
+                  <ul class="absolute right-0 z-10 mt-2 min-w-56 list-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 text-[var(--color-text)] shadow-lg">
+                    <li>
+                      <a
+                        href={item.href}
+                        class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold no-underline aria-[current=page]:bg-[var(--color-primary)] aria-[current=page]:text-[var(--color-on-primary)]"
+                        aria-label={item.ariaLabel}
+                        aria-current={
+                          isNavigationItemActive(currentPathname, item.href, item.external)
+                            ? "page"
+                            : undefined
+                        }
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noopener noreferrer" : undefined}
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                    {item.children.map((child) => (
+                      <li>
+                        <a
+                          href={child.href}
+                          class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small no-underline"
+                          aria-label={child.ariaLabel}
+                          target={child.external ? "_blank" : undefined}
+                          rel={child.external ? "noopener noreferrer" : undefined}
+                        >
+                          {child.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : (
+                <a
+                  href={item.href}
+                  class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold no-underline aria-[current=page]:bg-[var(--color-primary)] aria-[current=page]:text-[var(--color-on-primary)]"
+                  aria-label={item.ariaLabel}
+                  aria-current={
+                    isNavigationItemActive(currentPathname, item.href, item.external)
+                      ? "page"
+                      : undefined
+                  }
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
+                >
+                  {item.label}
+                </a>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <MobileMenu />
+  </Container>
+</header>

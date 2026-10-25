@@ -1,0 +1,13 @@
+---
+import type { JsonLdObject } from "../../types/seo";
+import { serializeJsonLd } from "../../utils/seo";
+
+export interface Props {
+  data: JsonLdObject;
+}
+
+const { data } = Astro.props as Props;
+const json = serializeJsonLd(data);
+---
+
+<script type="application/ld+json" set:html={json} is:inline></script>

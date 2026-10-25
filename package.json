@@ -1,0 +1,31 @@
+{
+  "name": "mld-signature-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "typecheck": "astro check",
+    "check:todo": "node scripts/check-todos.mjs",
+    "validate:production": "npm run check:todo && npm run check && npm run build"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.2",
+    "gsap": "^3.15.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=9.6.5"
+  }
+}

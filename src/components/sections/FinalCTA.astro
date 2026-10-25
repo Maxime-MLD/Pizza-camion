@@ -1,0 +1,33 @@
+---
+import { businessConfig } from "../../config/business.config";
+import { createTelHref } from "../../utils/links";
+import Button from "../ui/Button.astro";
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "TODO_FINAL_CTA_TITLE",
+  description = "TODO_FINAL_CTA_DESCRIPTION",
+} = Astro.props as Props;
+const phoneHref = createTelHref(businessConfig.contact.phoneNormalized);
+---
+
+<Section id="final-cta" spacing="lg" width="full" aria-labelledby="final-cta-title">
+  <Container>
+    <!-- TODO_FINAL_CTA_SECTION: adapter le message et l'action au parcours client. -->
+    <div class="flex min-w-0 flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
+      <div class="safe-wrap max-w-3xl">
+        <h2 id="final-cta-title">{title}</h2>
+        <p class="mt-4 text-body-lg text-[var(--color-text-muted)]">{description}</p>
+      </div>
+      <Button href={phoneHref} disabled={!phoneHref}>
+        {businessConfig.contact.phoneDisplay}
+      </Button>
+    </div>
+  </Container>
+</Section>

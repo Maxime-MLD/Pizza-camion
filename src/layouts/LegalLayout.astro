@@ -1,0 +1,30 @@
+---
+import Section from "../components/ui/Section.astro";
+import BaseLayout from "./BaseLayout.astro";
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props as Props;
+---
+
+<BaseLayout title={title} description={description} navbarVariant="light">
+
+  <Section spacing="lg">
+    <article class="mx-auto max-w-4xl">
+      <header class="border-b border-[var(--color-border)] pb-8">
+        <p class="text-small font-semibold tracking-[0.08em] text-[var(--color-text-muted)] uppercase">
+          Informations légales
+        </p>
+        <h1 class="mt-4">{title}</h1>
+        {description && <p class="mt-6 text-body-lg text-[var(--color-text-muted)]">{description}</p>}
+      </header>
+
+      <div class="safe-wrap mt-10 min-w-0 space-y-12 text-body">
+        <slot />
+      </div>
+    </article>
+  </Section>
+</BaseLayout>

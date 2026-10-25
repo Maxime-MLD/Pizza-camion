@@ -1,0 +1,39 @@
+---
+import { services } from "../../data/services";
+import Container from "../ui/Container.astro";
+import Section from "../ui/Section.astro";
+import SectionHeader from "../ui/SectionHeader.astro";
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "TODO_SERVICES_SECTION_TITLE",
+  description = "TODO_SERVICES_SECTION_DESCRIPTION",
+} = Astro.props as Props;
+---
+
+<Section id="services" spacing="lg" width="full" aria-labelledby="services-title">
+  <Container>
+    <!-- TODO_SERVICES_SECTION: définir la présentation finale des services. -->
+    <SectionHeader title={title} description={description} headingId="services-title" />
+
+    <ul class="mt-10 grid min-w-0 list-none gap-6 p-0 md:grid-cols-2 lg:grid-cols-3">
+      {
+        services.map((service) => (
+          <li class="min-w-0">
+            <article class="safe-wrap h-full rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6">
+              <h3>{service.title}</h3>
+              <p class="mt-4 text-[var(--color-text-muted)]">{service.shortDescription}</p>
+              <a class="focus-ring mt-6 inline-block rounded-[var(--radius-sm)]" href={service.href}>
+                TODO_SERVICE_LINK_LABEL
+              </a>
+            </article>
+          </li>
+        ))
+      }
+    </ul>
+  </Container>
+</Section>

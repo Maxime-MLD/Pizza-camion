@@ -1,0 +1,36 @@
+---
+import About from "../components/sections/About.astro";
+import Contact from "../components/sections/Contact.astro";
+import FAQ from "../components/sections/FAQ.astro";
+import FinalCTA from "../components/sections/FinalCTA.astro";
+import Hero from "../components/sections/Hero.astro";
+import LocalArea from "../components/sections/LocalArea.astro";
+import Method from "../components/sections/Method.astro";
+import PracticalInfo from "../components/sections/PracticalInfo.astro";
+import Projects from "../components/sections/Projects.astro";
+import Services from "../components/sections/Services.astro";
+import Testimonials from "../components/sections/Testimonials.astro";
+import TrustBar from "../components/sections/TrustBar.astro";
+import { featuresConfig } from "../config/features.config";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="TODO_HOME_PAGE_TITLE"
+  description="TODO_HOME_PAGE_META_DESCRIPTION"
+  navbarSticky
+>
+  <!-- TODO_PAGE_TEMPLATE: compléter ou supprimer cette page avant la livraison. -->
+  <Hero />
+  <TrustBar />
+  <Services />
+  <About />
+  {featuresConfig.projects && <Projects />}
+  <Method />
+  {featuresConfig.localArea && <LocalArea />}
+  {featuresConfig.testimonials && <Testimonials />}
+  {featuresConfig.practicalInfo && <PracticalInfo />}
+  {featuresConfig.faq && <FAQ />}
+  <FinalCTA />
+  <Contact />
+</BaseLayout>
