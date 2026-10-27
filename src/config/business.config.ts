@@ -1,14 +1,14 @@
 import type { BusinessConfig } from "../types/business.config";
 
 export const businessConfig = {
-  tradeName: "TODO_BUSINESS_NAME",
+  tradeName: "FORNO.",
   legalName: "TODO_LEGAL_NAME",
   owner: {
     firstName: "TODO_OWNER_FIRST_NAME",
     lastName: "TODO_OWNER_LAST_NAME",
   },
-  activity: "TODO_BUSINESS_ACTIVITY",
-  shortDescription: "TODO_BUSINESS_SHORT_DESCRIPTION",
+  activity: "Pizza Truck Artisanal",
+  shortDescription: "Des pizzas maison, une pâte travaillée avec soin et une cuisson au four au cœur de votre village.",
   contact: {
     phoneDisplay: "TODO_PHONE_DISPLAY",
     phoneNormalized: "TODO_PHONE_NORMALIZED",

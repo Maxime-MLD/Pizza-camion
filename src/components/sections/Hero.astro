@@ -1,52 +1,54 @@
 ---
-import { businessConfig } from "../../config/business.config";
+import { brandConfig } from "../../config/brand.config";
+import pizzaVisual from "../../assets/forno-pizza-temporary.jpg";
+import { getTodayDisplay } from "../../utils/truckToday";
+import { isPlaceholderValue } from "../../utils/placeholders";
 import Container from "../ui/Container.astro";
-import Section from "../ui/Section.astro";
+import ResponsiveImage from "../ui/ResponsiveImage.astro";
 
-export interface Props {
-  eyebrow?: string;
-  title?: string;
-  description?: string;
-  fullHeight?: boolean;
-}
-
-const {
-  eyebrow = businessConfig.activity,
-  title = businessConfig.tradeName,
-  description = businessConfig.shortDescription,
-  fullHeight = false,
-} = Astro.props as Props;
-
-const hasMedia = Astro.slots.has("media");
+const today = getTodayDisplay(new Date());
+const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
+const scheduleReady = !isPlaceholderValue(brandConfig.scheduleUrl);
 ---
 
-<Section id="hero" spacing="none" width="full" aria-labelledby="hero-title">
-  <Container>
-    <div
-      class:list={[
-        "grid min-w-0 gap-8 py-[var(--section-space-lg)] lg:gap-12",
-        hasMedia && "lg:grid-cols-2",
-        fullHeight && "min-h-[calc(100svh-4rem)] items-center",
-      ]}
-    >
-      <div class="safe-wrap max-w-3xl">
-        <p class="text-small font-semibold tracking-[0.08em] text-[var(--color-text-muted)] uppercase">
-          {eyebrow}
-        </p>
-        <h1 id="hero-title" class="mt-4">{title}</h1>
-        <p class="mt-6 max-w-2xl text-body-lg text-[var(--color-text-muted)]">
-          {description}
-        </p>
+<section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden bg-[var(--color-background)]">
+  <Container class="grid min-h-[calc(100svh-7.5rem)] items-center gap-12 py-10 sm:py-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:gap-8 lg:py-16">
+    <div class="relative z-10 min-w-0 max-w-[48rem]">
+      <div class="motion-enter inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[0.75rem] font-bold sm:text-[0.86rem]">
+        <span data-today-badge>{today.badge}</span><span class="text-[var(--color-muted-foreground)]" aria-hidden="true">·</span><span class="text-[var(--color-muted-foreground)]" data-today-meta>{today.meta}</span>
       </div>
 
-      {
-        hasMedia && (
-          <div class="min-w-0" data-hero-media>
-            <!-- TODO_HERO_MEDIA: ajouter le média client prévu pour cette section. -->
-            <slot name="media" />
-          </div>
-        )
-      }
+      <h1 id="hero-title" class="motion-enter mt-7 text-[clamp(3.75rem,12vw,8.5rem)] leading-[0.84] font-extrabold tracking-[-0.048em] sm:mt-9 lg:text-[clamp(5.2rem,8.5vw,9rem)]">
+        <span class="block" data-today-heading-top>{today.headingTop}</span>
+        <span class="block" data-today-heading-middle>{today.headingMiddle}</span>
+        <span class="block break-words text-[var(--color-primary)]" data-today-heading-place>{today.headingPlace}</span>
+      </h1>
+
+      <p class="mt-7 max-w-[35rem] text-[clamp(1rem,1.5vw,1.25rem)] leading-relaxed text-[var(--color-text)] sm:mt-9">{brandConfig.description}</p>
+
+      <div class="motion-enter mt-8 flex flex-wrap items-center gap-3 sm:mt-9">
+        <a href={orderReady ? brandConfig.orderUrl : undefined} aria-disabled={!orderReady ? "true" : undefined} tabindex={!orderReady ? -1 : undefined} data-order-link class="focus-ring inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 py-3 text-button text-[var(--color-on-primary)] no-underline shadow-[0_0.5rem_1.2rem_rgb(229_58_34_/_0.16)] transition-colors hover:bg-[var(--color-primary-dark)] aria-disabled:opacity-70">{brandConfig.labels.orderPizzas}<span aria-hidden="true" class="ml-2">↗</span></a>
+        <a href={scheduleReady ? brandConfig.scheduleUrl : undefined} aria-disabled={!scheduleReady ? "true" : undefined} tabindex={!scheduleReady ? -1 : undefined} class="focus-ring inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-6 py-3 text-button no-underline transition-colors hover:bg-[var(--color-surface-2)] aria-disabled:opacity-70">{brandConfig.labels.schedule}<span aria-hidden="true" class="ml-2">↗</span></a>
+      </div>
+
+      <div class="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-[var(--color-border)] pt-6 text-[0.82rem] sm:mt-12" id="service-info">
+        <p class="flex items-start gap-2"><span aria-hidden="true" class="text-[var(--color-primary)]">⌖</span><span><span class="block text-label text-[var(--color-muted-foreground)]">Emplacement</span><span class="mt-1 block font-semibold" data-today-location>{today.location}</span></span></p>
+        <p class="flex items-start gap-2"><span aria-hidden="true" class="text-[var(--color-primary)]">◷</span><span><span class="block text-label text-[var(--color-muted-foreground)]">Service</span><span class="mt-1 block font-semibold" data-today-hours>{today.hours}</span></span></p>
+      </div>
+    </div>
+
+    <div class="relative mx-auto w-full max-w-[37rem] lg:max-w-none">
+      <div class="absolute -top-4 -left-3 z-10 flex size-24 -rotate-12 items-center justify-center rounded-full bg-[var(--color-secondary)] text-center font-display text-[1.1rem] leading-[0.9] font-extrabold text-[var(--color-secondary-foreground)] shadow-lg sm:size-28 sm:text-[1.3rem]">FAIT<br />AVEC<br />AMORE</div>
+      <div class="motion-enter relative overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface-2)] shadow-[0_2rem_4rem_rgb(33_23_18_/_0.12)] sm:rounded-[2.5rem]">
+        <ResponsiveImage src={pizzaVisual} alt="Pizza margherita artisanale, visuel provisoire de l’univers FORNO." priority layout="full-width" widths={[480, 720, 960, 1200]} sizes="(max-width: 1023px) 90vw, 43vw" class="aspect-[4/4.5] w-full object-cover sm:aspect-[4/4.2] lg:aspect-[4/5]" />
+        <div class="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-[rgb(33_23_18_/_0.75)] to-transparent px-6 pt-16 pb-6 text-white">
+          <p class="font-display text-3xl leading-none font-extrabold uppercase sm:text-4xl">LA PIZZA<br />PREND LA ROUTE.</p>
+          <p class="mt-2 text-[0.7rem]">{brandConfig.temporaryVisualLabel}</p>
+        </div>
+      </div>
+      <span class="pointer-events-none absolute -right-2 -bottom-4 -z-10 size-32 rounded-full bg-[var(--color-accent)] sm:size-44" aria-hidden="true"></span>
     </div>
   </Container>
-</Section>
+</section>
+
+<script>import "../../scripts/schedule-ui";</script>

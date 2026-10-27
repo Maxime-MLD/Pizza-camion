@@ -17,9 +17,9 @@ export interface Props {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:opacity-90",
+  primary: "bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-dark)]",
   secondary:
-    "border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-text)]",
+    "border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]",
   text: "text-[var(--color-primary)] underline decoration-transparent hover:decoration-current",
 };
 
@@ -45,7 +45,7 @@ const {
 const hasIcon = Astro.slots.has("icon");
 const safeRel = target === "_blank" ? rel ?? "noopener noreferrer" : rel;
 const classes = [
-  "focus-ring tap-target inline-flex max-w-full items-center justify-center gap-2 rounded-[var(--radius-md)] text-center font-semibold no-underline disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+  "focus-ring tap-target inline-flex max-w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] text-center font-semibold no-underline transition-colors duration-[var(--duration-fast)] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
   variantClasses[variant],
   sizeClasses[size],
   className,

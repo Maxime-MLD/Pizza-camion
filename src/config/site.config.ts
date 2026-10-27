@@ -1,8 +1,8 @@
 import { businessConfig } from "./business.config";
 
-const TODO_CANONICAL_URL = "https://todo-domain.example";
-const TODO_THEME_COLOR = "#171717";
-const TODO_MANIFEST_BACKGROUND_COLOR = "#fafafa";
+const TODO_CANONICAL_URL = "https://pizza-camion-forno.quirkyhawk35.chatgpt.site";
+const TODO_THEME_COLOR = "#F7EEDB";
+const TODO_MANIFEST_BACKGROUND_COLOR = "#F7EEDB";
 const TODO_SITE_LANGUAGE = "fr";
 const TODO_SITE_LOCALE = "fr_FR";
 
@@ -16,8 +16,6 @@ export interface SiteConfig {
   logo: string;
   icons: {
     favicon: string;
-    faviconPng: string;
-    appleTouchIcon: string;
   };
   socialImages: {
     openGraph: string;
@@ -49,15 +47,13 @@ export const siteConfig = {
   locale: TODO_SITE_LOCALE,
   themeColor: TODO_THEME_COLOR,
   author: businessConfig.legalName,
-  logo: "TODO_CLIENT_LOGO_URL",
+  logo: "/icons/forno-mark.svg",
   icons: {
-    favicon: "/icons/TODO_REPLACE_CLIENT_FAVICON.svg",
-    faviconPng: "/icons/TODO_REPLACE_CLIENT_FAVICON_32.png",
-    appleTouchIcon: "/icons/TODO_REPLACE_CLIENT_APPLE_TOUCH_ICON.png",
+    favicon: "/icons/forno-mark.svg",
   },
   socialImages: {
-    openGraph: "/social/TODO_REPLACE_CLIENT_OG.png",
-    twitter: "/social/TODO_REPLACE_CLIENT_TWITTER.png",
+    openGraph: "/social/forno-og.jpg",
+    twitter: "/social/forno-og.jpg",
   },
   manifest: {
     path: "/manifest.webmanifest",
@@ -71,15 +67,15 @@ export const siteConfig = {
     themeColor: TODO_THEME_COLOR,
     icons: [
       {
-        src: "/icons/TODO_REPLACE_CLIENT_ICON_192.png",
-        sizes: "192x192",
-        type: "image/png",
+        src: "/icons/forno-mark.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
       },
       {
-        src: "/icons/TODO_REPLACE_CLIENT_ICON_512.png",
-        sizes: "512x512",
-        type: "image/png",
+        src: "/icons/forno-mark.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
       },
     ],

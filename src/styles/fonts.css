@@ -1,6 +1,15 @@
-/*
- * Déclarer ici uniquement les fichiers locaux licenciés, idéalement au format
- * WOFF2 variable ou avec peu de graisses. Utiliser font-display: swap, puis
- * mettre à jour les familles dans tokens.css. L'exemple complet est conservé
- * dans le README afin que ce fichier de production reste contrôlable.
- */
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/fonts/barlow-condensed-latin-800.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin-variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}

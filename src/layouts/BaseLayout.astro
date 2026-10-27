@@ -12,8 +12,8 @@ type NavbarVariant = "default" | "transparent" | "light" | "dark";
 export interface Props extends PageSeoProps {
   navbarVariant?: NavbarVariant;
   navbarSticky?: boolean;
-  navbarHideOnScroll?: boolean;
   bodyClass?: string;
+  showFooter?: boolean;
 }
 
 const {
@@ -27,8 +27,8 @@ const {
   breadcrumbs,
   navbarVariant = "default",
   navbarSticky = false,
-  navbarHideOnScroll = false,
   bodyClass,
+  showFooter = true,
 } = Astro.props as Props;
 ---
 
@@ -40,6 +40,7 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
+    <link rel="preload" href="/fonts/barlow-condensed-latin-800.woff2" as="font" type="font/woff2" crossorigin />
     <SEO
       title={title}
       description={description}
@@ -61,16 +62,12 @@ const {
       Aller au contenu principal
     </a>
 
-    <Navbar
-      variant={navbarVariant}
-      sticky={navbarSticky}
-      hideOnScroll={navbarHideOnScroll}
-    />
+    <Navbar variant={navbarVariant} sticky={navbarSticky} />
 
     <main id="main-content" class="min-h-[50vh]" tabindex="-1">
       <slot />
     </main>
 
-    <Footer />
+    {showFooter && <Footer />}
   </body>
 </html>

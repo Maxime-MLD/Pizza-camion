@@ -49,7 +49,7 @@ export interface SeoConfig {
 }
 
 export const seoConfig = {
-  defaultTitle: siteConfig.name,
+  defaultTitle: "FORNO. — Pizza Truck Artisanal",
   titleTemplate: `%s | ${siteConfig.name}`,
   defaultDescription: businessConfig.shortDescription,
   // TODO_SEO_KEYWORDS: renseigner uniquement si elles apportent une valeur réelle.
@@ -60,10 +60,10 @@ export const seoConfig = {
   // TODO_SCHEMA_ORG_TYPE: choisir le sous-type Schema.org le plus précis pour le client.
   schemaOrgType: "LocalBusiness",
   robots: {
-    index: true,
+    index: false,
     follow: true,
     googleBot: {
-      index: true,
+      index: false,
       follow: true,
       maxImagePreview: "large",
       maxSnippet: -1,

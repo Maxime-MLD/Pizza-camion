@@ -5,6 +5,7 @@ import { siteConfig } from "./src/config/site.config.ts";
 
 export default defineConfig({
   output: "static",
+  devToolbar: { enabled: false },
   site: siteConfig.canonicalUrl,
   integrations: [
     sitemap({

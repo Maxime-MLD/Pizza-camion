@@ -1,132 +1,52 @@
 ---
-import { navigationConfig } from "../../config/navigation.config";
-import type { NavigationItem } from "../../config/navigation.config";
-import { siteConfig } from "../../config/site.config";
-import { isNavigationItemActive } from "../../utils/navigation";
+import { brandConfig } from "../../config/brand.config";
+import { getTodayDisplay } from "../../utils/truckToday";
+import { isPlaceholderValue } from "../../utils/placeholders";
 import Container from "../ui/Container.astro";
 import MobileMenu from "./MobileMenu.astro";
 
-type NavbarVariant = "default" | "transparent" | "light" | "dark";
-
-export interface Props {
-  variant?: NavbarVariant;
-  sticky?: boolean;
-  hideOnScroll?: boolean;
-  class?: string;
-}
-
-const variantClasses: Record<NavbarVariant, string> = {
-  default:
-    "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)]",
-  transparent: "border-transparent bg-transparent text-[var(--color-text)]",
-  light: "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
-  dark: "border-transparent bg-[var(--color-primary)] text-[var(--color-on-primary)]",
-};
-
-const {
-  variant = "default",
-  sticky = false,
-  hideOnScroll = false,
-  class: className,
-} = Astro.props as Props;
-
-const currentPathname = Astro.url.pathname;
-const navigationItems: readonly NavigationItem[] = navigationConfig.items;
+export interface Props { class?: string; variant?: "default" | "transparent" | "light" | "dark"; sticky?: boolean; }
+const { class: className, variant = "default", sticky = false } = Astro.props as Props;
+const today = getTodayDisplay(new Date());
+const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
 ---
 
-<header
-  class:list={[
-    "z-50 w-full border-b",
-    sticky && "sticky top-0",
-    variantClasses[variant],
-    className,
-  ]}
-  data-navbar
-  data-navbar-variant={variant}
-  data-hide-on-scroll={hideOnScroll ? "true" : "false"}
->
-  <Container class="flex min-h-16 items-center justify-between gap-6">
-    <a href="/" class="safe-wrap font-display font-semibold no-underline">
-      {siteConfig.name}
+<header class:list={["z-40 border-b border-[var(--color-border)]", sticky ? "sticky top-0" : "relative", variant === "light" ? "bg-[var(--color-surface)]" : variant === "dark" ? "bg-[var(--color-text)] text-[var(--color-primary-foreground)]" : variant === "transparent" ? "bg-transparent" : "bg-[var(--color-background)]", className]}>
+  <Container class="flex min-h-[5.5rem] items-center justify-between gap-5 lg:min-h-[6.5rem]">
+    <a href="/" aria-label="FORNO. — accueil" class="focus-ring shrink-0 rounded-sm no-underline">
+      <span class="block font-display text-[2.2rem] leading-[0.8] font-extrabold tracking-[-0.045em] lg:text-[2.8rem]">
+        {brandConfig.wordmark}<span class="text-[var(--color-primary)]">.</span>
+      </span>
+      <span class="mt-1.5 block font-body text-[0.53rem] leading-none font-bold tracking-[0.17em] lg:text-[0.64rem]">{brandConfig.baseline}</span>
     </a>
 
-    <nav
-      class="hidden lg:block"
-      aria-label={navigationConfig.labels.primaryNavigation}
-    >
+    <nav aria-label={brandConfig.labels.mainNav} class="hidden xl:block">
       <ul class="m-0 flex list-none items-center gap-1 p-0">
-        {
-          navigationItems.map((item) => (
-            <li>
-              {item.children && item.children.length > 0 ? (
-                <details class="group relative">
-                  <summary class="focus-ring flex cursor-pointer list-none items-center gap-1 rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold [&::-webkit-details-marker]:hidden">
-                    {item.label}
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 16 16"
-                      class="size-4"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    >
-                      <path d="m4 6 4 4 4-4"></path>
-                    </svg>
-                  </summary>
-                  <ul class="absolute right-0 z-10 mt-2 min-w-56 list-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 text-[var(--color-text)] shadow-lg">
-                    <li>
-                      <a
-                        href={item.href}
-                        class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold no-underline aria-[current=page]:bg-[var(--color-primary)] aria-[current=page]:text-[var(--color-on-primary)]"
-                        aria-label={item.ariaLabel}
-                        aria-current={
-                          isNavigationItemActive(currentPathname, item.href, item.external)
-                            ? "page"
-                            : undefined
-                        }
-                        target={item.external ? "_blank" : undefined}
-                        rel={item.external ? "noopener noreferrer" : undefined}
-                      >
-                        {item.label}
-                      </a>
-                    </li>
-                    {item.children.map((child) => (
-                      <li>
-                        <a
-                          href={child.href}
-                          class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small no-underline"
-                          aria-label={child.ariaLabel}
-                          target={child.external ? "_blank" : undefined}
-                          rel={child.external ? "noopener noreferrer" : undefined}
-                        >
-                          {child.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ) : (
-                <a
-                  href={item.href}
-                  class="focus-ring safe-wrap block rounded-[var(--radius-sm)] px-3 py-2 text-small font-semibold no-underline aria-[current=page]:bg-[var(--color-primary)] aria-[current=page]:text-[var(--color-on-primary)]"
-                  aria-label={item.ariaLabel}
-                  aria-current={
-                    isNavigationItemActive(currentPathname, item.href, item.external)
-                      ? "page"
-                      : undefined
-                  }
-                  target={item.external ? "_blank" : undefined}
-                  rel={item.external ? "noopener noreferrer" : undefined}
-                >
-                  {item.label}
-                </a>
-              )}
-            </li>
-          ))
-        }
+        {brandConfig.navigation.map((item) => (
+          <li>
+            {item.ready ? (
+              <a href={item.href} aria-current={item.href === Astro.url.pathname ? "page" : undefined} class="focus-ring rounded-full px-3 py-2 text-[0.86rem] font-semibold no-underline transition-colors hover:text-[var(--color-primary)]" >{item.label}</a>
+            ) : (
+              <span title={brandConfig.labels.notReady} class="px-3 py-2 text-[0.86rem] font-semibold text-[var(--color-muted-foreground)]">{item.label}</span>
+            )}
+          </li>
+        ))}
       </ul>
     </nav>
 
+    <div class="hidden items-center gap-3 md:flex">
+      <span class="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[0.78rem] font-semibold whitespace-nowrap" data-today-nav>{today.navStatus}</span>
+      <a
+        href={orderReady ? brandConfig.orderUrl : undefined}
+        aria-disabled={!orderReady ? "true" : undefined}
+        tabindex={!orderReady ? -1 : undefined}
+        title={!orderReady ? brandConfig.labels.notReady : undefined}
+        class="focus-ring inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-button text-[var(--color-on-primary)] no-underline transition-colors hover:bg-[var(--color-primary-dark)] aria-disabled:opacity-70"
+        data-order-link
+      >{brandConfig.labels.order}<span aria-hidden="true" class="ml-2">↗</span></a>
+    </div>
+
     <MobileMenu />
   </Container>
+  <div class="border-t border-[var(--color-border)] px-4 py-2 text-center text-[0.74rem] font-semibold md:hidden" data-today-nav>{today.navStatus}</div>
 </header>

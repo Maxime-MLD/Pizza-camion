@@ -13,6 +13,22 @@
   outline-offset: 0.25rem;
 
   &:focus-visible {
-    outline-color: var(--color-accent);
+    outline-color: var(--color-ring);
   }
+}
+
+@utility surface-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 1rem 2rem rgb(33 23 18 / 0.04);
+}
+
+@utility motion-enter {
+  @media (prefers-reduced-motion: no-preference) { animation: forno-enter 650ms var(--ease-premium) both; }
+}
+
+@keyframes forno-enter {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -1,4 +1,19 @@
-# MLD Signature Starter
+# FORNO. — Pizza Truck Artisanal
+
+Projet « pizza camion » basé sur MLD Signature Starter. La direction artistique, la Navbar et le Hero sont intégrés. Le reste des sections du starter demeure à compléter pour le client et n’est pas affiché sur l’accueil.
+
+## Direction artistique
+
+- Palette : crème `#F7EEDB`, tomate `#E53A22`, basilic `#1F8A4D`, safran `#F4BE3D`, charbon `#211712`. Les couleurs d’usage et variantes sont définies dans `src/styles/tokens.css` pour Tailwind 4.
+- Titres : Barlow Condensed ExtraBold local. Textes et interface : Inter variable local. Les deux fichiers WOFF2 se trouvent dans `public/fonts/` ; seule la police de titre est préchargée.
+- Échelles typographiques, surfaces, boutons, focus et mouvement réduit sont définis dans `src/styles/`. Les composants Astro restent indépendants : Navbar dans `src/components/layout/`, Hero dans `src/components/sections/`, Footer séparé.
+- Le visuel de pizza dans `src/assets/forno-pizza-temporary.jpg` a été généré comme image temporaire d’ambiance. Il est optimisé par Astro via `ResponsiveImage.astro` et doit être remplacé par une photo validée du client.
+
+## Planning temporaire
+
+Le planning fictif est centralisé dans `src/data/truckSchedule.ts`. `src/utils/truckToday.ts` calcule l’entrée du jour dans le fuseau `Europe/Paris`, l’ouverture selon les horaires et le prochain village en cas de fermeture. Le HTML est généré avec la date de build, puis `src/scripts/schedule-ui.ts` actualise Navbar et Hero à l’ouverture depuis l’en-tête HTTP `Date` du site ; si cet en-tête est indisponible en local, l’horloge de l’appareil prend le relais. L’actualisation se répète lorsque l’onglet redevient visible.
+
+Les adresses précises, liens de commande et liens de navigation encore inconnus portent le préfixe `TODO_` dans les données et la configuration. Les liens correspondants restent inactifs tant qu’ils ne sont pas renseignés ; la commande est également inactive hors service. Le site reste en `noindex` pendant cette phase. La barre de développement Astro est désactivée dans `astro.config.mjs`.
 
 Starter technique Astro pour la création de sites vitrines premium destinés aux artisans, PME et professions libérales.
 
