@@ -25,6 +25,8 @@
   --color-about-label-background: #104d32;
   --color-how-background: var(--color-text);
   --color-how-foreground: var(--color-background);
+  --color-how-card: #2a211d;
+  --color-how-muted: #d9cbb3;
   --color-practical-background: var(--color-background);
   --color-practical-foreground: var(--color-text);
   --color-final-cta-background: var(--color-primary);

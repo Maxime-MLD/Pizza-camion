@@ -1,0 +1,41 @@
+---
+import { howItWorksConfig } from "../../config/how-it-works.config";
+import { orderSteps } from "../../data/orderSteps";
+import Container from "../ui/Container.astro";
+import OrderStepIcon from "../ui/OrderStepIcon.astro";
+---
+
+<section id="comment-ca-marche" aria-labelledby="how-title" class="overflow-x-clip bg-[var(--color-how-background)] py-20 text-[var(--color-how-foreground)] sm:py-24 lg:py-28">
+  <Container>
+    <header data-how-reveal class="grid items-end gap-7 motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)] lg:grid-cols-[minmax(0,1.3fr)_minmax(16rem,0.7fr)] lg:gap-12">
+      <div>
+        <p class="font-display text-base font-extrabold uppercase tracking-[0.16em] text-[var(--color-accent)] sm:text-lg">{howItWorksConfig.eyebrow}</p>
+        <h2 id="how-title" class="mt-4 font-display text-[clamp(3.75rem,9vw,8rem)] leading-[0.83] font-extrabold uppercase tracking-[-0.035em]">
+          <span class="block">{howItWorksConfig.titleLineOne}</span>
+          <span class="block">{howItWorksConfig.titleLineTwo}</span>
+        </h2>
+      </div>
+      <p class="max-w-[27rem] border-t border-[var(--color-border-strong)] pt-5 text-base leading-relaxed text-[var(--color-how-muted)] sm:text-lg lg:pb-1">{howItWorksConfig.description}</p>
+    </header>
+
+    <ol class="mt-12 grid min-w-0 gap-5 sm:mt-16 sm:gap-7 lg:grid-cols-2 lg:gap-8">
+      {orderSteps.map((step, index) => (
+        <li data-how-reveal class:list={["flex min-w-0 flex-col rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-[var(--color-how-card)] p-6 motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)] sm:p-9 xl:p-11", index === 1 && "motion-safe:delay-100"]}>
+          <div class="flex items-start justify-between gap-5">
+            <span aria-hidden="true" class:list={["font-display text-[clamp(5.5rem,10vw,9rem)] leading-[0.75] font-extrabold tracking-[-0.07em]", step.accent === "saffron" ? "text-[var(--color-accent)]" : "text-[var(--color-primary)]"]}>{step.number}</span>
+            <OrderStepIcon kind={step.icon} class="size-9 shrink-0 text-[var(--color-how-muted)] sm:size-11" />
+          </div>
+          <div class="mt-10 flex flex-1 flex-col justify-end sm:mt-14">
+            <h3 class="font-display text-[clamp(2.6rem,4.5vw,4.5rem)] leading-[0.9] font-extrabold uppercase tracking-[-0.025em]">
+              <span class="block">{step.titleLineOne}</span>
+              <span class="block">{step.titleLineTwo}</span>
+            </h3>
+            <p class="mt-6 max-w-[28rem] border-t border-[var(--color-border-strong)] pt-5 text-base leading-[1.65] text-[var(--color-how-muted)] sm:text-lg">{step.description}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </Container>
+</section>
+
+<script>import "../../scripts/how-reveal";</script>

@@ -1,0 +1,23 @@
+---
+export interface Props {
+  kind: "basket" | "truck";
+  class?: string;
+}
+
+const { kind, class: className } = Astro.props as Props;
+---
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className} aria-hidden="true" focusable="false">
+  {kind === "basket" ? (
+    <>
+      <path d="M8 18h32l-3.5 22h-25L8 18Z" />
+      <path d="m16 18 8-12 8 12M17 25v8m7-8v8m7-8v8" />
+    </>
+  ) : (
+    <>
+      <path d="M4 12h25v23H4V12Zm25 8h9l6 7v8H29V20Z" />
+      <path d="M34 20v8h10M8 35a4 4 0 1 0 8 0m18 0a4 4 0 1 0 8 0" />
+      <path d="M11 19h11m-11 6h8" />
+    </>
+  )}
+</svg>
