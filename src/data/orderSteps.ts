@@ -1,20 +1,26 @@
 export const orderSteps = [
   {
     id: "commande",
-    number: "1.",
+    number: "01",
     titleLineOne: "JE COMMANDE",
     titleLineTwo: "EN LIGNE.",
-    description: "Je choisis mes pizzas, sélectionne mon heure de retrait et envoie ma commande en quelques clics.",
-    icon: "basket",
+    description: "Je choisis mes pizzas, mon heure de retrait et j’envoie ma commande en quelques clics.",
     accent: "saffron",
   },
   {
+    id: "preparation",
+    number: "02",
+    titleLineOne: "JE PRÉPARE",
+    titleLineTwo: "VOTRE COMMANDE.",
+    description: "Je reçois votre demande et je prépare vos pizzas pour qu’elles soient prêtes au bon moment.",
+    accent: "tomato",
+  },
+  {
     id: "retrait",
-    number: "2.",
+    number: "03",
     titleLineOne: "JE RÉCUPÈRE",
     titleLineTwo: "ET JE PAIE.",
-    description: "Une fois ma commande confirmée, je passe au camion à l'heure prévue et je règle directement sur place.",
-    icon: "truck",
-    accent: "tomato",
+    description: "Je passe au camion à l’heure prévue, je récupère ma commande et je règle directement sur place.",
+    accent: "basil",
   },
 ] as const;

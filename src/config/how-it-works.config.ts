@@ -1,6 +1,6 @@
 export const howItWorksConfig = {
   eyebrow: "SIMPLE, RAPIDE & GOURMAND",
-  titleLineOne: "COMMENT",
-  titleLineTwo: "ÇA MARCHE ?",
-  description: "Deux étapes, et vos pizzas sont prêtes à être dégustées.",
+  titleLineOne: "COMMENT ÇA",
+  titleLineTwo: "MARCHE ?",
+  description: "Trois étapes simples pour commander vos pizzas et les récupérer au camion.",
 } as const;
