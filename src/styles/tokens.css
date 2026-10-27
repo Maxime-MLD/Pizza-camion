@@ -18,6 +18,21 @@
   --color-text: #211712;
   --color-border: #d5c6aa;
   --color-ring: #bd2915;
+  /* Rythme des sections FORNO. Les futures sections réutilisent les couleurs existantes. */
+  --color-menu-background: #e7d4b5;
+  --color-menu-card: #fff8ea;
+  --color-about-background: #197a48;
+  --color-about-label-background: #104d32;
+  --color-how-background: var(--color-text);
+  --color-how-foreground: var(--color-background);
+  --color-practical-background: var(--color-background);
+  --color-practical-foreground: var(--color-text);
+  --color-final-cta-background: var(--color-primary);
+  --color-final-cta-foreground: var(--color-background);
+  --color-final-cta-button: var(--color-background);
+  --color-final-cta-button-foreground: var(--color-text);
+  --color-footer-background: var(--color-text);
+  --color-footer-foreground: var(--color-background);
 }
 
 :root {

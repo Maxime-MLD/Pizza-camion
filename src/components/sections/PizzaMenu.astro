@@ -9,10 +9,10 @@ const images = import.meta.glob<{ default: ImageMetadata }>("../../assets/pizzas
 const imageFor = (file: string) => images[`../../assets/pizzas/${file}`]?.default;
 ---
 
-<section id="la-carte" aria-labelledby="menu-title" class="bg-[var(--color-background)] py-18 sm:py-24 lg:py-28">
+<section id="la-carte" aria-labelledby="menu-title" class="bg-[var(--color-menu-background)] py-18 text-[var(--color-text)] sm:py-24 lg:py-28">
   <Container>
     <header class="mx-auto max-w-[46rem] text-center">
-      <p class="font-display text-lg font-extrabold uppercase tracking-[0.16em] text-[var(--color-primary)]">{pizzaMenuConfig.eyebrow}</p>
+      <p class="font-display text-lg font-extrabold uppercase tracking-[0.16em] text-[var(--color-text)]">{pizzaMenuConfig.eyebrow}</p>
       <h2 id="menu-title" class="mt-3 font-display text-[clamp(3.5rem,9vw,7rem)] leading-[0.86] font-extrabold uppercase tracking-[-0.04em]">{pizzaMenuConfig.title}</h2>
       <p class="mx-auto mt-6 max-w-[35rem] text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">{pizzaMenuConfig.description}</p>
     </header>
