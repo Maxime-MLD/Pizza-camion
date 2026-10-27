@@ -11,6 +11,10 @@
   --color-accent: #f4be3d;
   --color-accent-foreground: #211712;
   --color-background: #f7eedb;
+  --color-hero-base: #fff2de;
+  --color-hero-peach: #fde1d2;
+  --color-hero-vanilla: #fff0cd;
+  --color-hero-cream: #fff3df;
   --color-surface: #fffaf0;
   --color-surface-2: #eee2c9;
   --color-muted: #eee2c9;
@@ -40,6 +44,10 @@
 
 :root {
   color-scheme: light;
+  --background-hero:
+    radial-gradient(ellipse 80% 90% at 0% 32%, color-mix(in srgb, var(--color-hero-peach) 88%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 70% 88% at 88% 2%, color-mix(in srgb, var(--color-hero-vanilla) 76%, transparent) 0%, transparent 74%),
+    linear-gradient(110deg, var(--color-hero-base) 0%, var(--color-hero-cream) 55%, var(--color-hero-base) 100%);
   /* Aliases retained for the starter components. */
   --color-on-primary: var(--color-primary-foreground);
   --color-on-secondary: var(--color-secondary-foreground);

@@ -11,7 +11,7 @@ const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
 const scheduleReady = !isPlaceholderValue(brandConfig.scheduleUrl);
 ---
 
-<section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden bg-[var(--color-background)]">
+<section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden bg-[var(--color-hero-base)] bg-[image:var(--background-hero)]">
   <Container class="grid min-h-[calc(100svh-7.5rem)] items-center gap-12 py-10 sm:py-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:gap-8 lg:py-16">
     <div class="relative z-10 min-w-0 max-w-[48rem]">
       <div class="motion-enter inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[0.75rem] font-bold sm:text-[0.86rem]">
