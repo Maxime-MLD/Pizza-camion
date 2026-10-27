@@ -2,6 +2,24 @@
   html[data-smooth-scroll="true"] {
     scroll-behavior: smooth;
   }
+
+  .village-marquee-track {
+    animation: village-marquee-scroll 40s linear infinite;
+  }
+
+  .village-marquee:hover .village-marquee-track,
+  .village-marquee:focus-within .village-marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes village-marquee-scroll {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .village-marquee { overflow-x: auto; }
+  .village-marquee [data-marquee-copy] { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

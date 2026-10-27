@@ -25,5 +25,8 @@ export const brandConfig = {
     schedule: "Voir le planning",
     upcoming: "Prochain service",
     notReady: "À venir",
+    marqueeTitle: "Villages de la semaine",
+    marqueeToday: "AUJOURD’HUI",
+    marqueeRest: "REPOS",
   },
 } as const;

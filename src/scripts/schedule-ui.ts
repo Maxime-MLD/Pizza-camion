@@ -16,6 +16,12 @@ function render(now: Date): void {
   updateText("[data-today-heading-place]", today.headingPlace);
   updateText("[data-today-location]", today.location);
   updateText("[data-today-hours]", today.hours);
+  document.querySelectorAll<HTMLElement>("[data-marquee-day]").forEach((entry) => {
+    entry.querySelector<HTMLElement>("[data-marquee-today]")?.classList.toggle(
+      "hidden",
+      Number(entry.dataset.marqueeDay) !== today.stop.day,
+    );
+  });
   const canOrder = today.isOpen && !isPlaceholderValue(brandConfig.orderUrl);
   document.querySelectorAll<HTMLAnchorElement>("[data-order-link]").forEach((link) => {
     if (canOrder) {

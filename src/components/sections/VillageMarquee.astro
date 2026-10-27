@@ -1,0 +1,48 @@
+---
+import { brandConfig } from "../../config/brand.config";
+import { truckSchedule } from "../../data/truckSchedule";
+import { getTodayDisplay } from "../../utils/truckToday";
+
+const today = getTodayDisplay(new Date());
+const stops = truckSchedule.map((stop) => ({
+  day: stop.day,
+  label: stop.dayLabel.slice(0, 3).toLocaleUpperCase("fr-FR"),
+  place: stop.status === "closed" ? brandConfig.labels.marqueeRest : stop.village ?? brandConfig.labels.marqueeRest,
+}));
+---
+
+<section
+  class="village-marquee w-full overflow-hidden bg-[var(--color-primary)] py-4 text-[var(--color-primary-foreground)] focus-visible:outline-4 focus-visible:outline-[var(--color-accent)] sm:py-5"
+  aria-labelledby="village-marquee-title"
+  tabindex="0"
+>
+  <h2 id="village-marquee-title" class="sr-only">{brandConfig.labels.marqueeTitle}</h2>
+  <div class="village-marquee-track flex w-max">
+    {
+      [0, 1].map((copy) => (
+        <ul
+          class="m-0 flex w-max min-w-[100vw] shrink-0 list-none items-center justify-around p-0"
+          aria-hidden={copy === 1 ? "true" : undefined}
+          data-marquee-copy={copy === 1 ? "" : undefined}
+        >
+          {stops.map((stop) => (
+            <li class="flex shrink-0 items-center gap-5 px-5 sm:gap-8 sm:px-8 lg:px-10" data-marquee-day={stop.day}>
+              <span class="flex shrink-0 flex-col items-start gap-1">
+                <span class="font-body text-[0.66rem] leading-none font-bold tracking-[0.17em] sm:text-[0.72rem]">{stop.label}</span>
+                <span class="font-display text-[clamp(1.6rem,3vw,2.6rem)] leading-[0.88] font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase">{stop.place}</span>
+              </span>
+              <span
+                class:list={[
+                  "rounded-full bg-[var(--color-accent)] px-2 py-1 font-body text-[0.58rem] leading-none font-extrabold tracking-[0.05em] whitespace-nowrap text-[var(--color-accent-foreground)] sm:text-[0.65rem]",
+                  stop.day !== today.stop.day && "hidden",
+                ]}
+                data-marquee-today
+              >{brandConfig.labels.marqueeToday}</span>
+              <span class="font-display text-[1.7rem] leading-none text-[var(--color-accent)] sm:text-[2rem]" aria-hidden="true">✳</span>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</section>
