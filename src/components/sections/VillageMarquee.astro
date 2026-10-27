@@ -2,6 +2,7 @@
 import { brandConfig } from "../../config/brand.config";
 import { truckSchedule } from "../../data/truckSchedule";
 import { getTodayDisplay } from "../../utils/truckToday";
+import FourPointStar from "../ui/FourPointStar.astro";
 
 const today = getTodayDisplay(new Date());
 const stops = truckSchedule.map((stop) => ({
@@ -38,7 +39,7 @@ const stops = truckSchedule.map((stop) => ({
                 ]}
                 data-marquee-today
               >{brandConfig.labels.marqueeToday}</span>
-              <span class="font-display text-[1.7rem] leading-none text-[var(--color-accent)] sm:text-[2rem]" aria-hidden="true">✳</span>
+              <FourPointStar class="size-5 shrink-0 text-[var(--color-marquee-separator)] sm:size-6" />
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
 @theme {
   --color-primary: #e53a22;
   --color-primary-foreground: #fff9ee;
+  --color-marquee-separator: #ffffff;
   --color-primary-dark: #bd2915;
   --color-primary-light: #ffe0d7;
   --color-secondary: #1f8a4d;
