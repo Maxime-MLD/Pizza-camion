@@ -1,6 +1,7 @@
 ---
 import { brandConfig } from "../../config/brand.config";
-import pizzaVisual from "../../assets/forno-pizza-temporary.jpg";
+// TODO_IMAGE : illustration générée pour la Hero, à remplacer si une photographie de marque est disponible.
+import pizzaVisual from "../../assets/forno-hero-floating-pizza.webp";
 import { getTodayDisplay } from "../../utils/truckToday";
 import { isPlaceholderValue } from "../../utils/placeholders";
 import Container from "../ui/Container.astro";
@@ -11,8 +12,9 @@ const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
 const scheduleReady = !isPlaceholderValue(brandConfig.scheduleUrl);
 ---
 
-<section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden bg-[var(--color-hero-base)] bg-[image:var(--background-hero)]">
-  <Container class="grid min-h-[calc(100svh-7.5rem)] items-center gap-12 py-10 sm:py-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:gap-8 lg:py-16">
+<!-- La Navbar transparente se superpose à ce fond unique : aucun raccord de dégradé. -->
+<section id="hero" aria-labelledby="hero-title" class="relative overflow-x-clip bg-[var(--color-hero-base)] bg-[image:var(--background-hero)] pt-[7.75rem] md:pt-[5.5rem] lg:pt-[6.5rem]">
+  <Container class="grid min-h-[calc(100svh-7.5rem)] items-center gap-10 py-10 sm:py-14 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-0 lg:py-12 xl:py-14">
     <div class="relative z-10 min-w-0 max-w-[48rem]">
       <div class="motion-enter inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[0.75rem] font-bold sm:text-[0.86rem]">
         <span data-today-badge>{today.badge}</span><span class="text-[var(--color-muted-foreground)]" aria-hidden="true">·</span><span class="text-[var(--color-muted-foreground)]" data-today-meta>{today.meta}</span>
@@ -37,17 +39,10 @@ const scheduleReady = !isPlaceholderValue(brandConfig.scheduleUrl);
       </div>
     </div>
 
-    <div class="relative mx-auto w-full max-w-[37rem] lg:max-w-none">
-      <div class="absolute -top-4 -left-3 z-10 flex size-24 -rotate-12 items-center justify-center rounded-full bg-[var(--color-secondary)] text-center font-display text-[1.1rem] leading-[0.9] font-extrabold text-[var(--color-secondary-foreground)] shadow-lg sm:size-28 sm:text-[1.3rem]">FAIT<br />AVEC<br />AMORE</div>
-      <div class="motion-enter relative overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface-2)] shadow-[0_2rem_4rem_rgb(33_23_18_/_0.12)] sm:rounded-[2.5rem]">
-        <ResponsiveImage src={pizzaVisual} alt="Pizza margherita artisanale, visuel provisoire de l’univers FORNO." priority layout="full-width" widths={[480, 720, 960, 1200]} sizes="(max-width: 1023px) 90vw, 43vw" class="aspect-[4/4.5] w-full object-cover sm:aspect-[4/4.2] lg:aspect-[4/5]" />
-        <div class="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-[rgb(33_23_18_/_0.75)] to-transparent px-6 pt-16 pb-6 text-white">
-          <p class="font-display text-3xl leading-none font-extrabold uppercase sm:text-4xl">LA PIZZA<br />PREND LA ROUTE.</p>
-          <p class="mt-2 text-[0.7rem]">{brandConfig.temporaryVisualLabel}</p>
-        </div>
-      </div>
-      <span class="pointer-events-none absolute -right-2 -bottom-4 -z-10 size-32 rounded-full bg-[var(--color-accent)] sm:size-44" aria-hidden="true"></span>
-    </div>
+    <figure class="relative mx-auto w-full max-w-[24rem] motion-safe:animate-[hero-visual-enter_600ms_var(--ease-premium)_both] sm:max-w-[32rem] lg:-mr-4 lg:max-w-none xl:-mr-8">
+      <ResponsiveImage src={pizzaVisual} alt={brandConfig.heroVisualAlt} priority layout="full-width" width={1122} height={1402} widths={[360, 560, 760, 960, 1122]} sizes="(max-width: 639px) 90vw, (max-width: 1023px) 32rem, 53vw" formats={["webp"]} fallbackFormat="webp" quality={85} class="mx-auto w-full object-contain lg:h-[clamp(34rem,53vw,44rem)]" />
+      <figcaption class="sr-only">{brandConfig.heroVisualCaption} {brandConfig.temporaryVisualLabel}</figcaption>
+    </figure>
   </Container>
 </section>
 

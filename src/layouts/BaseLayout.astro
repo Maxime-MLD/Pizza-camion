@@ -12,6 +12,7 @@ type NavbarVariant = "default" | "transparent" | "light" | "dark";
 export interface Props extends PageSeoProps {
   navbarVariant?: NavbarVariant;
   navbarSticky?: boolean;
+  navbarOverlay?: boolean;
   bodyClass?: string;
   showFooter?: boolean;
 }
@@ -27,6 +28,7 @@ const {
   breadcrumbs,
   navbarVariant = "default",
   navbarSticky = false,
+  navbarOverlay = false,
   bodyClass,
   showFooter = true,
 } = Astro.props as Props;
@@ -62,7 +64,7 @@ const {
       Aller au contenu principal
     </a>
 
-    <Navbar variant={navbarVariant} sticky={navbarSticky} />
+    <Navbar variant={navbarOverlay ? "transparent" : navbarVariant} sticky={navbarSticky} overlay={navbarOverlay} />
 
     <main id="main-content" class="min-h-[50vh]" tabindex="-1">
       <slot />

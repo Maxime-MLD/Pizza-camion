@@ -5,6 +5,8 @@ export const brandConfig = {
   tagline: "Le feu, la pâte et le plaisir de se retrouver.",
   description: "Des pizzas maison, une pâte travaillée avec soin et une cuisson au four pour vous régaler au cœur de votre village.",
   temporaryVisualLabel: "Visuel d’ambiance provisoire — pizza illustrant l’univers FORNO.",
+  heroVisualAlt: "Composition d’illustration générée : pizza artisanale aux parts suspendues, mozzarella filante, basilic et tomates, sur fond transparent.",
+  heroVisualCaption: "LA PIZZA PREND LA ROUTE.",
   navigation: [
     { label: "Accueil", href: "/", ready: true },
     { label: "La carte", href: "TODO_MENU_URL", ready: false },

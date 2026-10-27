@@ -5,13 +5,13 @@ import { isPlaceholderValue } from "../../utils/placeholders";
 import Container from "../ui/Container.astro";
 import MobileMenu from "./MobileMenu.astro";
 
-export interface Props { class?: string; variant?: "default" | "transparent" | "light" | "dark"; sticky?: boolean; }
-const { class: className, variant = "default", sticky = false } = Astro.props as Props;
+export interface Props { class?: string; variant?: "default" | "transparent" | "light" | "dark"; sticky?: boolean; overlay?: boolean; }
+const { class: className, variant = "default", sticky = false, overlay = false } = Astro.props as Props;
 const today = getTodayDisplay(new Date());
 const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
 ---
 
-<header class:list={["z-40 border-b border-[var(--color-border)]", sticky ? "sticky top-0" : "relative", variant === "light" ? "bg-[var(--color-surface)]" : variant === "dark" ? "bg-[var(--color-text)] text-[var(--color-primary-foreground)]" : variant === "transparent" ? "bg-transparent" : "bg-[var(--color-background)]", className]}>
+<header class:list={["z-40", !overlay && "border-b border-[var(--color-border)]", sticky ? "sticky top-0" : overlay ? "absolute inset-x-0 top-0" : "relative", variant === "light" ? "bg-[var(--color-surface)]" : variant === "dark" ? "bg-[var(--color-text)] text-[var(--color-primary-foreground)]" : variant === "transparent" ? "bg-transparent" : "bg-[var(--color-background)]", className]}>
   <Container class="flex min-h-[5.5rem] items-center justify-between gap-5 lg:min-h-[6.5rem]">
     <a href="/" aria-label="FORNO. — accueil" class="focus-ring shrink-0 rounded-sm no-underline">
       <span class="block font-display text-[2.2rem] leading-[0.8] font-extrabold tracking-[-0.045em] lg:text-[2.8rem]">
@@ -48,5 +48,5 @@ const orderReady = !isPlaceholderValue(brandConfig.orderUrl) && today.isOpen;
 
     <MobileMenu />
   </Container>
-  <div class="border-t border-[var(--color-border)] px-4 py-2 text-center text-[0.74rem] font-semibold md:hidden" data-today-nav>{today.navStatus}</div>
+  <div class:list={["px-4 py-2 text-center text-[0.74rem] font-semibold md:hidden", !overlay && "border-t border-[var(--color-border)]"]} data-today-nav>{today.navStatus}</div>
 </header>
