@@ -23,8 +23,8 @@
   --color-border: #d5c6aa;
   --color-ring: #bd2915;
   /* Rythme des sections FORNO. Les futures sections réutilisent les couleurs existantes. */
-  --color-menu-background: #e7d4b5;
-  --color-menu-card: #fff8ea;
+  --color-menu-background: #fff1df;
+  --color-menu-card: #fffaef;
   --color-about-background: #197a48;
   --color-about-label-background: #104d32;
   --color-how-background: var(--color-text);
