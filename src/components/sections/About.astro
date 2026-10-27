@@ -1,31 +1,52 @@
 ---
-import { businessConfig } from "../../config/business.config";
+import { aboutConfig } from "../../config/about.config";
+// TODO_IMAGE : visuel temporaire généré pour la maquette. Remplacer par une vraie photo du pizzaiolo et de son camion.
+import temporaryAboutImage from "../../assets/TODO_forno-about-photo.webp";
 import Container from "../ui/Container.astro";
-import Section from "../ui/Section.astro";
-import SectionHeader from "../ui/SectionHeader.astro";
-
-export interface Props {
-  title?: string;
-}
-
-const { title = "TODO_ABOUT_SECTION_TITLE" } = Astro.props as Props;
+import FourPointStar from "../ui/FourPointStar.astro";
+import ResponsiveImage from "../ui/ResponsiveImage.astro";
 ---
 
-<Section id="about" spacing="lg" width="full" aria-labelledby="about-title">
+<section id="a-propos" aria-labelledby="about-title" class="overflow-x-clip border-t border-[var(--color-border)] bg-[var(--color-background)] py-20 sm:py-24 lg:py-32">
   <Container>
-    <!-- TODO_ABOUT_SECTION: ajouter le contenu et le média validés par le client. -->
-    <div class="grid min-w-0 gap-10 lg:grid-cols-2 lg:items-start">
-      <SectionHeader
-        title={title}
-        description={businessConfig.shortDescription}
-        headingId="about-title"
-      />
+    <div class="grid items-center gap-11 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-14 xl:gap-20">
+      <figure data-about-reveal class="min-w-0 motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)]">
+        <ResponsiveImage
+          src={temporaryAboutImage}
+          alt={aboutConfig.imageAlt}
+          width={1200}
+          height={900}
+          widths={[480, 720, 960, 1200]}
+          sizes="(max-width: 1023px) 100vw, 55vw"
+          formats={["webp"]}
+          fallbackFormat="webp"
+          class="aspect-[4/3] w-full rounded-[1.25rem] object-cover"
+        />
+        <figcaption class="mt-3 text-[0.68rem] font-semibold uppercase tracking-[0.11em] text-[var(--color-muted-foreground)]">{aboutConfig.temporaryImageCaption}</figcaption>
+      </figure>
 
-      <div class="safe-wrap min-w-0">
-        <p class="font-semibold">{businessConfig.tradeName}</p>
-        <p class="mt-3 text-[var(--color-text-muted)]">{businessConfig.activity}</p>
-        <slot />
+      <div class="min-w-0">
+        <header data-about-reveal class="motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)]">
+          <p class="text-xs leading-relaxed font-extrabold uppercase tracking-[0.12em] text-[var(--color-primary)] sm:text-sm">{aboutConfig.eyebrow}</p>
+          <h2 id="about-title" class="mt-5 font-display text-[clamp(3.2rem,5.8vw,5.75rem)] leading-[0.87] font-extrabold uppercase tracking-[-0.035em]">
+            <span class="block">{aboutConfig.titleLineOne}</span>
+            <span class="block">{aboutConfig.titleLineTwo}</span>
+            <span class="block text-[var(--color-primary)]">{aboutConfig.titleLineThree}</span>
+          </h2>
+        </header>
+
+        <div data-about-reveal class="mt-8 border-t border-[var(--color-border-strong)] pt-7 text-[clamp(1rem,1.2vw,1.2rem)] leading-[1.65] motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)] sm:mt-10 sm:pt-8">
+          <p>{aboutConfig.paragraphOne}</p>
+          <p class="mt-5">{aboutConfig.paragraphTwo}</p>
+        </div>
+
+        <p class="mt-8 flex items-center gap-3 font-display text-sm font-extrabold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+          <FourPointStar class="size-4 shrink-0" />
+          {aboutConfig.annotation}
+        </p>
       </div>
     </div>
   </Container>
-</Section>
+</section>
+
+<script>import "../../scripts/about-reveal";</script>
