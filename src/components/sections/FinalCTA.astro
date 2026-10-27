@@ -1,33 +1,45 @@
 ---
-import { businessConfig } from "../../config/business.config";
-import { createTelHref } from "../../utils/links";
-import Button from "../ui/Button.astro";
+import capriImage from "../../assets/pizzas/capri.webp";
+import { finalCtaConfig } from "../../config/final-cta.config";
+import { getFinalCtaState } from "../../utils/finalCtaState";
 import Container from "../ui/Container.astro";
-import Section from "../ui/Section.astro";
+import ResponsiveImage from "../ui/ResponsiveImage.astro";
 
-export interface Props {
-  title?: string;
-  description?: string;
-}
-
-const {
-  title = "TODO_FINAL_CTA_TITLE",
-  description = "TODO_FINAL_CTA_DESCRIPTION",
-} = Astro.props as Props;
-const phoneHref = createTelHref(businessConfig.contact.phoneNormalized);
+const initialState = getFinalCtaState(new Date());
 ---
 
-<Section id="final-cta" spacing="lg" width="full" aria-labelledby="final-cta-title">
-  <Container>
-    <!-- TODO_FINAL_CTA_SECTION: adapter le message et l'action au parcours client. -->
-    <div class="flex min-w-0 flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
-      <div class="safe-wrap max-w-3xl">
-        <h2 id="final-cta-title">{title}</h2>
-        <p class="mt-4 text-body-lg text-[var(--color-text-muted)]">{description}</p>
+<section id="commander" aria-labelledby="final-cta-title" class="overflow-x-clip bg-[var(--color-final-cta-background)] py-18 text-[var(--color-final-cta-foreground)] sm:py-22 lg:py-26">
+  <Container class="grid items-center gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-6">
+    <div class="relative z-10 min-w-0">
+      <p class="inline-block bg-[var(--color-text)] px-3 py-1.5 font-display text-base font-extrabold uppercase tracking-[0.15em] text-[var(--color-accent)] sm:text-lg">{finalCtaConfig.eyebrow}</p>
+      <h2 id="final-cta-title" data-final-cta-reveal class="mt-6 font-display text-[clamp(4.2rem,10vw,9rem)] leading-[0.83] font-extrabold uppercase tracking-[-0.04em] motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-[var(--ease-premium)]">
+        <span class="block">{finalCtaConfig.titleLineOne}</span>
+        <span class="block">{finalCtaConfig.titleLineTwo}</span>
+      </h2>
+      <div data-final-cta-reveal class="mt-8 max-w-[34rem] motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:delay-75 motion-safe:ease-[var(--ease-premium)] sm:mt-10">
+        <p data-final-cta-description class="text-[clamp(1.2rem,1.8vw,1.45rem)] leading-[1.5] font-semibold">{initialState.description}</p>
+        <p data-final-cta-service class="mt-6 border-t border-[var(--color-final-cta-foreground)] pt-5 text-[1.2rem] leading-[1.45] font-semibold">{initialState.serviceLine}</p>
+        <a data-final-cta-action href={initialState.actionHref} class="focus-ring mt-8 inline-flex min-h-14 items-center justify-center gap-6 rounded-full bg-[var(--color-final-cta-button)] px-7 py-4 font-display text-lg font-extrabold uppercase tracking-[0.04em] text-[var(--color-final-cta-button-foreground)] no-underline transition-colors hover:bg-[var(--color-primary-foreground)] sm:mt-9">
+          <span data-final-cta-action-label>{initialState.actionLabel}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true" focusable="false"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
+        </a>
       </div>
-      <Button href={phoneHref} disabled={!phoneHref}>
-        {businessConfig.contact.phoneDisplay}
-      </Button>
+    </div>
+
+    <div data-final-cta-reveal class="mx-auto w-[min(78vw,24rem)] motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:delay-100 motion-safe:ease-[var(--ease-premium)] sm:w-[min(66vw,31rem)] lg:-mr-8 lg:w-full lg:max-w-[41rem] xl:-mr-12">
+      <ResponsiveImage
+        src={capriImage}
+        alt={finalCtaConfig.imageAlt}
+        width={720}
+        height={720}
+        widths={[320, 480, 640, 720]}
+        sizes="(max-width: 639px) 78vw, (max-width: 1023px) 66vw, 42vw"
+        formats={["webp"]}
+        fallbackFormat="webp"
+        class="aspect-square w-full object-contain drop-shadow-[0_1.5rem_1.4rem_rgb(33_23_18_/_0.28)] motion-safe:transition-transform motion-safe:duration-[350ms] motion-safe:ease-[var(--ease-premium)] motion-safe:lg:hover:-translate-y-1.5"
+      />
     </div>
   </Container>
-</Section>
+</section>
+
+<script>import "../../scripts/final-cta";</script>

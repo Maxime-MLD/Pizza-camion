@@ -1,0 +1,15 @@
+export const finalCtaConfig = {
+  eyebrow: "UNE PETITE FAIM ?",
+  titleLineOne: "CE SOIR,",
+  titleLineTwo: "C'EST PIZZA !",
+  descriptionReady: "Vos pizzas artisanales vous attendent au camion. Réservez en quelques clics et payez directement sur place.",
+  descriptionUnavailable: "L'envie de pizza vous prend ? Découvrez nos recettes et retrouvez le prochain service du camion.",
+  serviceLine: (location: string, opens: string, closes: string) => `Retrouvez-moi ce soir ${location}, de ${opens} à ${closes}.`,
+  plannedLine: (location: string, opens: string, closes: string) => `Le camion est prévu ce soir ${location}, de ${opens} à ${closes}. Les commandes ne sont pas encore ouvertes.`,
+  menuLine: "La commande en ligne n'est pas encore disponible. Vous pouvez découvrir les pizzas de la carte.",
+  closedLine: (location: string, day: string, opens: string, closes: string) => `Le camion fait une pause aujourd'hui. Prochain arrêt ${location}, ${day} de ${opens} à ${closes}.`,
+  orderLabel: "COMMANDER MES PIZZAS",
+  menuLabel: "VOIR LA CARTE",
+  scheduleLabel: "VOIR LE PLANNING",
+  imageAlt: "Pizza Capri artisanale vue du dessus, avec une croûte dorée, de la tomate, de la mozzarella et de l'épaule.",
+} as const;
