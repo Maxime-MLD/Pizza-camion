@@ -1,8 +1,8 @@
 import { pizzaMenuConfig } from "../config/pizza-menu.config";
 import { pizzaById } from "../data/pizzas";
-import { formatEuros, getCartCount, getCartTotalCents, setCartQuantity, type Cart } from "../utils/pizzaCart";
+import { formatEuros, getCartCount, getCartTotalCents, type Cart } from "../utils/pizzaCart";
+import { cartStore } from "../stores/cartStore";
 
-const STORAGE_KEY = "forno-pizza-cart-v1";
 const section = document.querySelector<HTMLElement>("#la-carte");
 
 if (section) {
@@ -11,22 +11,10 @@ if (section) {
   const count = section.querySelector<HTMLElement>("[data-cart-count]");
   const total = section.querySelector<HTMLElement>("[data-cart-total]");
   const status = section.querySelector<HTMLElement>("[data-cart-status]");
+  const next = section.querySelector<HTMLElement>("[data-cart-next]");
 
   if (items && empty && count && total && status) {
-    let cart: Cart = {};
-
-    try {
-      const stored: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-      if (stored && typeof stored === "object" && !Array.isArray(stored)) {
-        for (const [id, quantity] of Object.entries(stored)) {
-          if (typeof quantity === "number" && Number.isInteger(quantity) && quantity > 0) {
-            cart = setCartQuantity(cart, id, quantity);
-          }
-        }
-      }
-    } catch {
-      cart = {};
-    }
+    let cart: Cart = cartStore.getSnapshot();
 
     const render = () => {
       items.replaceChildren();
@@ -72,7 +60,7 @@ if (section) {
       empty.hidden = itemCount > 0;
       count.textContent = String(itemCount);
       total.textContent = formatEuros(getCartTotalCents(cart));
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); } catch { /* Le panier reste utilisable sans stockage. */ }
+      if (next) next.hidden = itemCount === 0;
     };
 
     section.addEventListener("click", (event) => {
@@ -82,12 +70,11 @@ if (section) {
       const id = addButton?.dataset.addPizza ?? control?.dataset.cartId;
       if (!id || !pizzaById.has(id)) return;
       const change = addButton ? 1 : Number(control?.dataset.cartChange);
-      cart = setCartQuantity(cart, id, (cart[id] ?? 0) + change);
-      render();
+      cartStore.setQuantity(id, (cart[id] ?? 0) + change);
       const pizza = pizzaById.get(id);
       status.textContent = `${pizza?.name ?? "Pizza"} : ${cart[id] ?? 0} dans le panier. Total ${formatEuros(getCartTotalCents(cart))}.`;
     });
 
-    render();
+    cartStore.subscribe((nextCart) => { cart = nextCart; render(); });
   }
 }

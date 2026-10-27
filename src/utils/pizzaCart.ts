@@ -1,6 +1,24 @@
 import { pizzaById } from "../data/pizzas";
+import type { PricedOrderLine } from "../types/order";
 
 export type Cart = Record<string, number>;
+
+export function sanitizeCart(input: unknown): Cart {
+  let cart: Cart = {};
+  if (input && typeof input === "object" && !Array.isArray(input)) {
+    for (const [id, quantity] of Object.entries(input)) {
+      if (typeof quantity === "number" && Number.isInteger(quantity) && quantity > 0) cart = setCartQuantity(cart, id, quantity);
+    }
+  }
+  return cart;
+}
+
+export function getCartLines(cart: Cart): PricedOrderLine[] {
+  return Object.entries(sanitizeCart(cart)).flatMap(([pizzaId, quantity]) => {
+    const pizza = pizzaById.get(pizzaId);
+    return pizza ? [{ pizzaId, quantity, name: pizza.name, unitPriceCents: pizza.priceCents, lineTotalCents: pizza.priceCents * quantity, priceConfirmed: pizza.priceConfirmed }] : [];
+  });
+}
 
 export function setCartQuantity(cart: Cart, id: string, quantity: number): Cart {
   if (!pizzaById.has(id)) return cart;

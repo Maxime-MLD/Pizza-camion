@@ -1,0 +1,10 @@
+---
+import CheckoutFlow from "../components/checkout/CheckoutFlow.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { checkoutConfig } from "../config/checkout.config";
+import { brandConfig } from "../config/brand.config";
+---
+
+<BaseLayout title={`${checkoutConfig.pageTitle} — ${brandConfig.name}`} description={checkoutConfig.description} noindex>
+  <CheckoutFlow />
+</BaseLayout>

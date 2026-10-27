@@ -35,6 +35,9 @@ const imageFor = (file: string) => images[`../../assets/pizzas/${file}`]?.defaul
         <span>{pizzaMenuConfig.totalLabel}</span><strong data-cart-total class="text-[var(--color-primary)]">0,00 €</strong>
       </div>
       <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{pizzaMenuConfig.cartNote}</p>
+      <div data-cart-next hidden class="mt-6">
+        <a href="/commander/" class="focus-ring inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-primary-dark)] px-6 py-3 font-bold text-[var(--color-primary-foreground)] no-underline hover:bg-[var(--color-text)]">{pizzaMenuConfig.continueLabel}<span aria-hidden="true" class="ml-3">→</span></a>
+      </div>
       <p data-cart-status class="sr-only" role="status" aria-live="polite"></p>
     </aside>
   </Container>

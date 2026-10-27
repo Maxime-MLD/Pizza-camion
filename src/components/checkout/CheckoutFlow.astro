@@ -1,0 +1,129 @@
+---
+import { checkoutConfig as copy, pickupAvailabilityConfig } from "../../config/checkout.config";
+import Container from "../ui/Container.astro";
+
+const primaryButton = "focus-ring inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-primary-dark)] px-6 py-3 text-center font-bold text-[var(--color-primary-foreground)] no-underline transition-colors hover:bg-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-55";
+const backButton = "focus-ring inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] px-6 py-3 font-semibold hover:bg-[var(--color-surface-2)]";
+const fieldClass = "focus-ring mt-2 min-h-12 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-3 text-base text-[var(--color-text)] aria-invalid:border-[var(--color-primary-dark)]";
+const reviewFields = ["date", "village", "address", "slot", "name", "phone", "comment"] as const;
+---
+
+<section data-checkout class="bg-[var(--color-background)] py-12 sm:py-18 lg:py-22">
+  <Container>
+    <header class="max-w-[52rem]">
+      <p class="text-xs font-extrabold tracking-[0.16em] text-[var(--color-primary-dark)]">{copy.eyebrow}</p>
+      <h1 class="mt-4 font-display text-[clamp(3rem,6.5vw,6rem)] leading-[0.88] font-extrabold tracking-[-0.035em]">{copy.title}</h1>
+      <p class="mt-6 max-w-[38rem] text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">{copy.description}</p>
+    </header>
+
+    <p class="mt-8 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-5 py-4 text-sm leading-relaxed font-semibold">{copy.provisionalNotice}</p>
+    <noscript><p class="mt-6 font-semibold">{copy.noScript}</p></noscript>
+    <p data-checkout-loading class="mt-8" role="status">{copy.loading}</p>
+    <p data-checkout-storage hidden class="mt-6 font-semibold text-[var(--color-primary-dark)]">{copy.storageUnavailable}</p>
+
+    <div data-checkout-empty hidden class="mt-10 rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-6 sm:p-10">
+      <h2 class="font-display text-4xl font-extrabold">{copy.emptyTitle}</h2>
+      <p class="mt-4 leading-relaxed">{copy.emptyDescription}</p>
+      <a href="/#la-carte" class:list={[primaryButton, "mt-6"]}>{copy.menuLink}</a>
+    </div>
+
+    <div data-checkout-content hidden>
+      <ol aria-label={copy.progressLabel} class="mt-10 grid grid-cols-3 gap-3 sm:gap-6">
+        {copy.steps.map((step, index) => (
+          <li data-checkout-progress={index + 1} class="flex min-w-0 flex-col gap-2 border-b-2 border-[var(--color-border)] pb-4 text-xs font-bold text-[var(--color-muted-foreground)] aria-[current=step]:border-[var(--color-primary-dark)] aria-[current=step]:text-[var(--color-primary-dark)] sm:flex-row sm:items-center sm:gap-3 sm:text-base">
+            <span class="font-display text-3xl font-extrabold" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{step}</span>
+          </li>
+        ))}
+      </ol>
+      <p data-checkout-error hidden role="alert" class="mt-6 rounded-lg border border-[var(--color-primary-dark)] bg-[var(--color-primary-light)] p-4 font-semibold text-[var(--color-text)]"></p>
+
+      <div class="mt-7 grid items-start gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.8fr)] lg:gap-10">
+        <div class="min-w-0 rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-5 sm:p-8">
+          <section data-checkout-step="1" aria-labelledby="pickup-step-title" class="motion-safe:animate-[hero-visual-enter_200ms_var(--ease-premium)]">
+            <h2 id="pickup-step-title" tabindex="-1" class="font-display text-[clamp(2rem,3vw,3rem)] leading-none font-extrabold">{copy.pickup.title}</h2>
+            <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.pickup.description}</p>
+            <fieldset class="mt-7 min-w-0" aria-describedby="pickup-error">
+              <legend class="text-base font-bold">{copy.pickup.datesLabel}</legend>
+              <div data-pickup-dates class="mt-4 grid gap-3 sm:grid-cols-2"></div>
+              <p data-no-services hidden class="mt-4 text-sm leading-relaxed">{copy.pickup.noServices}</p>
+            </fieldset>
+            <p data-pickup-location hidden class="mt-5 text-sm leading-relaxed font-semibold"></p>
+            <div class="mt-6">
+              <label for="pickup-slot" class="font-bold">{copy.pickup.slotLabel}</label>
+              <select id="pickup-slot" data-pickup-slot disabled class={fieldClass} aria-describedby="pickup-time-help pickup-error"><option value="">{copy.pickup.selectDateFirst}</option></select>
+              <p id="pickup-time-help" class="mt-3 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.pickup.timeHelp(pickupAvailabilityConfig.minimumLeadMinutes)}</p>
+              <p id="pickup-error" data-pickup-error hidden class="mt-3 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
+            </div>
+            <button type="button" data-pickup-next class:list={[primaryButton, "mt-8 w-full sm:w-auto"]}>{copy.next}<span aria-hidden="true" class="ml-3">→</span></button>
+          </section>
+
+          <section data-checkout-step="2" hidden aria-labelledby="details-step-title" class="motion-safe:animate-[hero-visual-enter_200ms_var(--ease-premium)]">
+            <h2 id="details-step-title" tabindex="-1" class="font-display text-[clamp(2rem,3vw,3rem)] leading-none font-extrabold">{copy.details.title}</h2>
+            <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.details.description}</p>
+            <form data-details-form novalidate class="mt-7">
+              <p class="mb-5 text-xs leading-relaxed text-[var(--color-muted-foreground)]">{copy.details.requiredNote}</p>
+              <div class="grid gap-5 sm:grid-cols-2">
+                {(["firstName", "lastName"] as const).map((field) => (
+                  <div>
+                    <label for={`checkout-${field}`} class="font-bold">{copy.details[field]}</label>
+                    <input id={`checkout-${field}`} name={field} type="text" autocomplete={field === "firstName" ? "given-name" : "family-name"} required maxlength="80" class={fieldClass} aria-describedby={`error-${field}`} />
+                    <p id={`error-${field}`} data-error-for={field} hidden class="mt-2 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
+                  </div>
+                ))}
+              </div>
+              <div class="mt-5">
+                <label for="checkout-phone" class="font-bold">{copy.details.phone}</label>
+                <input id="checkout-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="30" class={fieldClass} aria-describedby="phone-help error-phone" />
+                <p id="phone-help" class="mt-2 text-xs leading-relaxed text-[var(--color-muted-foreground)]">{copy.details.phoneHelp}</p>
+                <p id="error-phone" data-error-for="phone" hidden class="mt-2 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
+              </div>
+              <div class="mt-5">
+                <label for="checkout-comment" class="font-bold">{copy.details.comment}</label>
+                <textarea id="checkout-comment" name="comment" rows="4" maxlength="500" class={fieldClass} aria-describedby="comment-help error-comment"></textarea>
+                <p id="comment-help" class="mt-2 text-xs leading-relaxed text-[var(--color-muted-foreground)]">{copy.details.commentHelp}</p>
+                <p id="error-comment" data-error-for="comment" hidden class="mt-2 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
+              </div>
+              <div class="mt-6">
+                <label for="checkout-privacy" class="flex min-h-11 items-start gap-3 text-sm leading-relaxed">
+                  <input id="checkout-privacy" name="privacyAcknowledged" type="checkbox" required class="focus-ring mt-1 size-5 shrink-0 accent-[var(--color-primary-dark)]" aria-describedby="error-privacyAcknowledged" />
+                  <span>{copy.details.privacyBefore} <a href="/politique-confidentialite/" target="_blank" rel="noopener noreferrer" class="focus-ring font-semibold underline">{copy.details.privacyLink}</a>{copy.details.privacyAfter}</span>
+                </label>
+                <p id="error-privacyAcknowledged" data-error-for="privacyAcknowledged" hidden class="mt-2 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
+              </div>
+              <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                <button type="button" data-checkout-back class={backButton}>{copy.back}</button>
+                <button type="submit" class={primaryButton}>{copy.verify}</button>
+              </div>
+            </form>
+          </section>
+
+          <section data-checkout-step="3" hidden aria-labelledby="review-step-title" class="motion-safe:animate-[hero-visual-enter_200ms_var(--ease-premium)]">
+            <h2 id="review-step-title" tabindex="-1" class="font-display text-[clamp(2rem,3vw,3rem)] leading-none font-extrabold">{copy.review.title}</h2>
+            <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.review.description}</p>
+            <dl class="mt-7 space-y-5">
+              {reviewFields.map((field) => <div><dt class="text-xs font-bold tracking-wide text-[var(--color-muted-foreground)] uppercase">{copy.review[field]}</dt><dd data-review={field} class="mt-1 font-semibold whitespace-pre-wrap wrap-anywhere"></dd></div>)}
+            </dl>
+            <button type="button" data-checkout-back class:list={[backButton, "mt-8"]}>{copy.back}</button>
+          </section>
+        </div>
+
+        <aside aria-labelledby="checkout-cart-title" class="min-w-0 rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-5 sm:p-7 lg:sticky lg:top-8">
+          <h2 id="checkout-cart-title" class="font-display text-3xl font-extrabold">{copy.cartTitle} <span data-checkout-count class="text-[var(--color-primary-dark)]"></span></h2>
+          <ul data-checkout-lines class="mt-5 divide-y divide-[var(--color-border)]"></ul>
+          <div class="mt-3 flex items-baseline justify-between gap-4 border-t border-[var(--color-text)] pt-5"><span class="font-semibold">{copy.totalLabel}</span><strong data-checkout-total class="font-display text-3xl font-extrabold text-[var(--color-primary-dark)]"></strong></div>
+          <p data-price-pending hidden class="mt-4 text-xs leading-relaxed text-[var(--color-primary-dark)]">{copy.pricePending}</p>
+          <a href="/#panier" class="focus-ring mt-5 inline-flex min-h-11 items-center font-semibold underline">{copy.editCart}</a>
+        </aside>
+      </div>
+
+      <div data-final-actions hidden class="mt-7 rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-5 sm:p-8">
+        <p class="text-lg font-bold">{copy.paymentNotice}</p>
+        <p class="mt-2 leading-relaxed">{copy.acceptanceNotice}</p>
+        <p id="checkout-backend-note" class="mt-5 max-w-[48rem] text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.backendNotice}</p>
+        <button type="button" disabled aria-describedby="checkout-backend-note" class:list={[primaryButton, "mt-6 w-full sm:w-auto"]}>{copy.send}</button>
+      </div>
+    </div>
+  </Container>
+</section>
+
+<script>import "../../scripts/checkout";</script>
