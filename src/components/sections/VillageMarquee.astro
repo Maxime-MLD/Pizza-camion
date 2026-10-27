@@ -22,24 +22,28 @@ const stops = truckSchedule.map((stop) => ({
     {
       [0, 1].map((copy) => (
         <ul
-          class="m-0 flex w-max min-w-[100vw] shrink-0 list-none items-center justify-around p-0"
+          class="m-0 flex w-max min-w-[100vw] shrink-0 list-none items-center p-0"
           aria-hidden={copy === 1 ? "true" : undefined}
           data-marquee-copy={copy === 1 ? "" : undefined}
         >
           {stops.map((stop) => (
-            <li class="flex shrink-0 items-center gap-5 px-5 sm:gap-8 sm:px-8 lg:px-10" data-marquee-day={stop.day}>
-              <span class="flex shrink-0 flex-col items-start gap-1">
-                <span class="font-body text-[0.66rem] leading-none font-bold tracking-[0.17em] sm:text-[0.72rem]">{stop.label}</span>
-                <span class="font-display text-[clamp(1.6rem,3vw,2.6rem)] leading-[0.88] font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase">{stop.place}</span>
+            <li class="flex shrink-0 grow items-center" data-marquee-day={stop.day}>
+              <span class="flex shrink-0 items-center gap-5 sm:gap-8" data-marquee-entry>
+                <span class="flex shrink-0 flex-col items-start gap-1">
+                  <span class="font-body text-[0.66rem] leading-none font-bold tracking-[0.17em] sm:text-[0.72rem]">{stop.label}</span>
+                  <span class="font-display text-[clamp(1.6rem,3vw,2.6rem)] leading-[0.88] font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase">{stop.place}</span>
+                </span>
+                <span
+                  class:list={[
+                    "rounded-full bg-[var(--color-accent)] px-2 py-1 font-body text-[0.58rem] leading-none font-extrabold tracking-[0.05em] whitespace-nowrap text-[var(--color-accent-foreground)] sm:text-[0.65rem]",
+                    stop.day !== today.stop.day && "hidden",
+                  ]}
+                  data-marquee-today
+                >{brandConfig.labels.marqueeToday}</span>
               </span>
-              <span
-                class:list={[
-                  "rounded-full bg-[var(--color-accent)] px-2 py-1 font-body text-[0.58rem] leading-none font-extrabold tracking-[0.05em] whitespace-nowrap text-[var(--color-accent-foreground)] sm:text-[0.65rem]",
-                  stop.day !== today.stop.day && "hidden",
-                ]}
-                data-marquee-today
-              >{brandConfig.labels.marqueeToday}</span>
-              <FourPointStar class="size-5 shrink-0 text-[var(--color-marquee-separator)] sm:size-6" />
+              <span class="flex min-w-20 flex-1 items-center justify-center sm:min-w-[7.5rem] lg:min-w-[8.5rem]" data-marquee-separator>
+                <FourPointStar class="size-5 shrink-0 text-[var(--color-marquee-separator)] sm:size-6" />
+              </span>
             </li>
           ))}
         </ul>
