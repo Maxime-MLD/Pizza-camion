@@ -1,0 +1,43 @@
+---
+import type { ImageMetadata } from "astro";
+import { pizzaMenuConfig } from "../../config/pizza-menu.config";
+import { pizzas } from "../../data/pizzas";
+import Container from "../ui/Container.astro";
+import PizzaCard from "../ui/PizzaCard.astro";
+
+const images = import.meta.glob<{ default: ImageMetadata }>("../../assets/pizzas/*.webp", { eager: true });
+const imageFor = (file: string) => images[`../../assets/pizzas/${file}`]?.default;
+---
+
+<section id="la-carte" aria-labelledby="menu-title" class="bg-[var(--color-background)] py-18 sm:py-24 lg:py-28">
+  <Container>
+    <header class="mx-auto max-w-[46rem] text-center">
+      <p class="font-display text-lg font-extrabold uppercase tracking-[0.16em] text-[var(--color-primary)]">{pizzaMenuConfig.eyebrow}</p>
+      <h2 id="menu-title" class="mt-3 font-display text-[clamp(3.5rem,9vw,7rem)] leading-[0.86] font-extrabold uppercase tracking-[-0.04em]">{pizzaMenuConfig.title}</h2>
+      <p class="mx-auto mt-6 max-w-[35rem] text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">{pizzaMenuConfig.description}</p>
+    </header>
+
+    <div class="mt-16 grid grid-cols-1 gap-x-7 gap-y-12 sm:mt-20 sm:grid-cols-2 sm:gap-y-16 lg:grid-cols-3 lg:gap-x-9">
+      {pizzas.map((pizza) => <PizzaCard pizza={pizza} image={imageFor(pizza.imageFile)} />)}
+    </div>
+
+    <p class="mt-12 text-center text-sm text-[var(--color-muted-foreground)]">{pizzaMenuConfig.supplementNote}</p>
+    <p class="mt-2 text-center text-xs text-[var(--color-muted-foreground)]">{pizzaMenuConfig.imageDisclosure}</p>
+
+    <aside id="panier" aria-labelledby="cart-title" class="mx-auto mt-14 max-w-[50rem] rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-6 shadow-[4px_5px_0_rgb(33_23_18_/_0.09)] sm:p-8">
+      <div class="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-border)] pb-5">
+        <h3 id="cart-title" class="font-display text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-extrabold uppercase">{pizzaMenuConfig.cartTitle}</h3>
+        <p class="rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-extrabold uppercase"><span data-cart-count>0</span> pizza(s)</p>
+      </div>
+      <p data-cart-empty class="py-8 text-center text-[var(--color-muted-foreground)]">{pizzaMenuConfig.cartEmpty}</p>
+      <ul data-cart-items class="divide-y divide-[var(--color-border)]" aria-label={pizzaMenuConfig.cartTitle}></ul>
+      <div class="flex items-baseline justify-between gap-5 border-t border-[var(--color-text)] pt-5 font-display text-3xl font-extrabold uppercase">
+        <span>{pizzaMenuConfig.totalLabel}</span><strong data-cart-total class="text-[var(--color-primary)]">0,00 €</strong>
+      </div>
+      <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{pizzaMenuConfig.cartNote}</p>
+      <p data-cart-status class="sr-only" role="status" aria-live="polite"></p>
+    </aside>
+  </Container>
+</section>
+
+<script>import "../../scripts/pizza-cart";</script>

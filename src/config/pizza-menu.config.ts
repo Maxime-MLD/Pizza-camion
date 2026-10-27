@@ -1,0 +1,15 @@
+export const pizzaMenuConfig = {
+  eyebrow: "La carte",
+  title: "LA PIZZA QUI FAIT DU CHEMIN.",
+  description: "Treize recettes généreuses, préparées avec amour et servies là où le camion s’arrête.",
+  addLabel: "Ajouter au panier",
+  cartTitle: "Votre panier",
+  cartEmpty: "Choisissez une pizza pour commencer.",
+  cartNote: "Panier indicatif — la commande et le retrait seront disponibles lors de l’ouverture du service.",
+  pricePending: "Tarif à confirmer",
+  imagePending: "Photo à venir",
+  imageDisclosure: "Visuels d’illustration générés d’après les recettes. Les pizzas servies peuvent différer.",
+  quantityLabel: "Quantité",
+  totalLabel: "Total",
+  supplementNote: "Tout supplément ou changement sur les pizzas : 1,00 € (options à confirmer).",
+} as const;

@@ -1,0 +1,32 @@
+---
+import type { ImageMetadata } from "astro";
+import type { Pizza } from "../../data/pizzas";
+import { pizzaMenuConfig } from "../../config/pizza-menu.config";
+import { formatEuros } from "../../utils/pizzaCart";
+import ResponsiveImage from "./ResponsiveImage.astro";
+
+interface Props {
+  pizza: Pizza;
+  image?: ImageMetadata;
+}
+
+const { pizza, image } = Astro.props;
+---
+
+<article class="group relative mt-18 flex min-h-[25rem] flex-col items-center overflow-visible rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] px-5 pt-[10rem] pb-6 text-center shadow-[4px_5px_0_rgb(33_23_18_/_0.09)] hover:shadow-[6px_8px_0_rgb(33_23_18_/_0.13)] sm:mt-20 sm:px-6 sm:pt-[9.5rem] motion-safe:transition-shadow motion-safe:duration-300">
+  <div class="absolute -top-[4.7rem] left-1/2 flex aspect-square w-[min(79%,15rem)] -translate-x-1/2 items-center justify-center overflow-visible sm:-top-[5.2rem] motion-safe:transition-transform motion-safe:duration-[350ms] motion-safe:ease-[var(--ease-premium)] motion-safe:group-hover:-translate-y-2 motion-safe:group-hover:rotate-2 motion-safe:group-focus-within:-translate-y-2 motion-safe:group-focus-within:rotate-2" aria-hidden="true">
+    {image ? (
+      <ResponsiveImage src={image} alt="" decorative width={480} height={480} widths={[240, 360, 480]} sizes="(max-width: 639px) 75vw, (max-width: 1023px) 38vw, 25vw" formats={["webp"]} fallbackFormat="webp" class="aspect-square h-full w-full object-contain" />
+    ) : (
+      <span class="flex aspect-square w-full items-center justify-center rounded-full border border-dashed border-[var(--color-border-strong)] text-xs font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">{pizzaMenuConfig.imagePending}</span>
+    )}
+  </div>
+
+  <h3 class="font-display text-[clamp(2.2rem,4vw,3rem)] leading-[0.9] font-extrabold uppercase tracking-[-0.025em]">{pizza.name}</h3>
+  <p class="mt-4 max-w-[23rem] text-sm leading-relaxed text-[var(--color-muted-foreground)] sm:text-base">{pizza.ingredients}</p>
+  <div class="mt-auto flex w-full flex-col items-center pt-6">
+    <p class="font-display text-[2rem] leading-none font-extrabold text-[var(--color-primary)]">{formatEuros(pizza.priceCents)}</p>
+    {!pizza.priceConfirmed && <p class="mt-1 text-[0.72rem] font-semibold text-[var(--color-muted-foreground)]">{pizzaMenuConfig.pricePending}</p>}
+    <button type="button" data-add-pizza={pizza.id} aria-label={`${pizzaMenuConfig.addLabel} : ${pizza.name}`} class="focus-ring mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-dark)] motion-reduce:transition-none">{pizzaMenuConfig.addLabel} <span class="ml-2 text-lg leading-none" aria-hidden="true">+</span></button>
+  </div>
+</article>
