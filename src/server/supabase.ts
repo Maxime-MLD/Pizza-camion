@@ -1,5 +1,6 @@
 /** Server-only native PostgREST client: no browser SDK, cookies or user session. */
 export interface OrderEnvironment {
+  FORNO_ORDERS_ENABLED?: string;
   SUPABASE_URL?: string;
   SUPABASE_SECRET_KEY?: string;
   ORDER_RATE_LIMIT_SALT?: string;

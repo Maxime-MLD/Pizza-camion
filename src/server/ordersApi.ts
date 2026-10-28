@@ -19,6 +19,8 @@ export async function handleOrdersApi(request: Request, env: OrderEnvironment, i
   const expectedMethod=isOrders?'GET, POST':'GET';
   if(!(isOrders ? ['POST','GET'].includes(request.method) : request.method==='GET')) return new Response(null,{status:405,headers:{Allow:expectedMethod,'Cache-Control':'no-store'}});
   if(request.headers.get('Sec-Fetch-Site')==='cross-site' || (request.method==='POST' && request.headers.get('Origin')!==url.origin)) return failure('FORBIDDEN',403);
+  // Deployment must never open ordering merely because credentials are configured.
+  if(env.FORNO_ORDERS_ENABLED !== 'true') return failure('ORDERS_DISABLED',503);
   if(!configured(env)) return failure('NOT_CONFIGURED',503);
   const rpc=dependencies.rpc??createRpc(env,dependencies.transport);
   try {

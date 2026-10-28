@@ -45,6 +45,7 @@ export const checkoutConfig = {
     statuses: { pending: "En attente d’acceptation", accepted: "Acceptée", rejected: "Refusée", preparing: "En préparation", ready: "Prête", completed: "Terminée", cancelled: "Annulée ou expirée" },
   },
   apiErrors: {
+    ORDERS_DISABLED: "Les commandes en ligne ne sont pas encore activées. Consultez le planning pour retrouver le camion.",
     NOT_CONFIGURED: "L’enregistrement des commandes n’est pas encore configuré.",
     RATE_LIMITED: "Trop de tentatives. Patientez une minute avant de réessayer.",
     BOT_VERIFICATION_FAILED: "La vérification de sécurité a expiré ou échoué. Recommencez-la avant de réessayer.",

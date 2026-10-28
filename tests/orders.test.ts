@@ -8,7 +8,7 @@ import {orderRequestSchema} from '../src/server/orderSchema';
 import {createRpc,DatabaseError,type Rpc} from '../src/server/supabase';
 import {readAttempt,saveAttempt} from '../src/scripts/orderSession';
 const db=new PGlite();
-const env={SUPABASE_URL:'https://test.supabase.co',SUPABASE_SECRET_KEY:'unit-test-only',ORDER_RATE_LIMIT_SALT:'test-salt-with-at-least-thirty-two-characters',TURNSTILE_SITE_KEY:'test-site',TURNSTILE_SECRET_KEY:'test-secret'};
+const env={FORNO_ORDERS_ENABLED:'true',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SECRET_KEY:'unit-test-only',ORDER_RATE_LIMIT_SALT:'test-salt-with-at-least-thirty-two-characters',TURNSTILE_SITE_KEY:'test-site',TURNSTILE_SECRET_KEY:'test-secret'};
 before(async()=>{
  await db.exec("create role anon; create role authenticated; create role service_role; create function public.forno_test_now() returns timestamptz language sql stable as $$ select coalesce(nullif(current_setting('forno.test_now',true),''),'2026-10-27T14:00:00Z')::timestamptz $$;");
  // Test-only clock substitution; production SQL always uses the actual PostgreSQL clock.
@@ -150,4 +150,16 @@ test('Durcissement : les valeurs NULL ne contournent pas les validations SQL',as
  for(const patch of [{customer:{...base().customer,firstName:null}},{customer:{...base().customer,phone:null}},{customer:{...base().customer,privacyAcknowledged:'true'}},{idempotencyKey:null}]){
   await transaction(async()=>{await assert.rejects(callOrder({...base(),...patch} as unknown as ReturnType<typeof base>),/INVALID_REQUEST/);});
  }
+});
+
+test('Déploiement : commandes désactivées par défaut, aucune requête Supabase sans activation explicite',async()=>{
+ let calls=0;const rpc:Rpc=async<T>()=>{calls++;return true as T;};
+ for(const enabled of [undefined,'false']){
+  const disabledEnv={...env,FORNO_ORDERS_ENABLED:enabled};
+  for(const req of [request(),new Request('https://forno.test/api/pickup-slots')]){
+   const response=await handleOrdersApi(req,disabledEnv,'ip',{rpc});
+   assert.equal(response.status,503);assert.equal((await response.json()).error,'ORDERS_DISABLED');
+  }
+ }
+ assert.equal(calls,0);
 });
