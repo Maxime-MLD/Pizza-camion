@@ -6,15 +6,17 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/package-astro-worker.mjs",
     "preview": "astro preview",
     "check": "astro check",
     "typecheck": "astro check",
     "test:checkout": "node --test scripts/test-checkout.mjs",
     "check:todo": "node scripts/check-todos.mjs",
-    "validate:production": "npm run check:todo && npm run check && npm run build"
+    "validate:production": "npm run check:todo && npm run check && npm run build",
+    "test:orders": "node --test scripts/test-orders.mjs"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "14.3.0",
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.2",
@@ -23,10 +25,17 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "typescript": "^6.0.3"
+    "@electric-sql/pglite": "^0.5.12",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.154.0"
   },
   "engines": {
     "node": ">=22.12.0",
     "npm": ">=9.6.5"
+  },
+  "overrides": {
+    "@cloudflare/vite-plugin": {
+      "undici": "7.30.1"
+    }
   }
 }

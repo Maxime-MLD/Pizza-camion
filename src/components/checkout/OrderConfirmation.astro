@@ -1,0 +1,18 @@
+---
+import { checkoutConfig as copy } from '../../config/checkout.config';
+---
+<section data-order-confirmation hidden aria-labelledby="confirmation-title" class="mt-10 rounded-xl border border-[var(--color-text)] bg-[var(--color-surface)] p-6 sm:p-10">
+  <h2 id="confirmation-title" tabindex="-1" class="font-display text-[clamp(2.5rem,5vw,4.5rem)] leading-none font-extrabold">{copy.confirmation.title}</h2>
+  <p class="mt-6 text-sm font-bold">{copy.confirmation.reference}</p>
+  <p data-confirmation-reference class="mt-2 font-display text-4xl font-extrabold text-[var(--color-primary-dark)]"></p>
+  <p data-confirmation-status class="mt-5 font-bold" role="status"></p>
+  <p data-confirmation-pending class="mt-3 max-w-[45rem] leading-relaxed">{copy.confirmation.pending}</p>
+  <dl class="mt-7 space-y-5">
+    {(['date','village','slot'] as const).map(key=><div><dt class="text-xs font-bold uppercase">{copy.review[key]}</dt><dd data-confirmation={key} class="mt-1 font-semibold"></dd></div>)}
+    <div><dt class="text-xs font-bold uppercase">{copy.totalLabel}</dt><dd data-confirmation="total" class="mt-1 font-display text-3xl font-extrabold"></dd></div>
+    <div data-confirmation-expiry><dt class="text-xs font-bold uppercase">{copy.confirmation.expiresLabel}</dt><dd data-confirmation="expires" class="mt-1 font-semibold"></dd></div>
+  </dl>
+  <p data-confirmation-expiry-note class="mt-5 max-w-[45rem] text-sm leading-relaxed">{copy.confirmation.expiry}</p>
+  <p class="mt-5 font-bold">{copy.confirmation.payment}</p>
+  <a href="/#la-carte" class="focus-ring mt-7 inline-flex min-h-12 items-center rounded-full bg-[var(--color-primary-dark)] px-6 py-3 font-bold text-[var(--color-primary-foreground)]">{copy.confirmation.back}</a>
+</section>

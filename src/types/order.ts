@@ -1,6 +1,6 @@
 export type OrderStatus = "pending" | "accepted" | "rejected" | "preparing" | "ready" | "completed" | "cancelled";
 
-/** Payload futur : les prix et le village ne proviennent jamais de la demande client. */
+/** Cart lines never contain authoritative client-supplied prices. */
 export interface OrderLine { pizzaId: string; quantity: number; }
 export interface PricedOrderLine extends OrderLine {
   name: string;
@@ -39,9 +39,9 @@ export interface OrderDraft {
   slotId: string;
   customer: CustomerDetails;
 }
-/** Contrat préparatoire seulement : aucun envoi ni endpoint n'est implémenté. */
+/** Legacy draft shape; the live API contract is SubmitOrderRequest in checkoutApi.ts. */
 export interface OrderSubmission extends OrderDraft { idempotencyKey: string; }
-/** Valeurs canoniques à produire par le futur serveur après validation. */
+/** Internal canonical order model; never returned with customer details by the public API. */
 export interface Order {
   id: string;
   status: OrderStatus;

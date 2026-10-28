@@ -1,3 +1,4 @@
+import cloudflare from "@astrojs/cloudflare";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
@@ -5,6 +6,8 @@ import { siteConfig } from "./src/config/site.config.ts";
 
 export default defineConfig({
   output: "static",
+  session: false,
+  adapter: cloudflare({ imageService: "compile", prerenderEnvironment: "node" }),
   devToolbar: { enabled: false },
   site: siteConfig.canonicalUrl,
   integrations: [

@@ -27,3 +27,8 @@ Thumbs.db
 
 # Test and coverage output
 coverage/
+
+# Cloudflare local state and secrets
+.wrangler/
+.dev.vars
+.dev.vars.*

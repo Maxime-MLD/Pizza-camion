@@ -1,7 +1,8 @@
 import { checkoutConfig as copy } from "../config/checkout.config";
 import { cartStore } from "../stores/cartStore";
-import { getCheckoutPickupState, parisDateKey } from "../utils/pickupAvailability";
-import { validateTodayPickupRequest } from "../utils/validateTodayPickup";
+import type { LivePickupAvailability, OrderReceipt, SubmitOrderRequest } from "../types/checkoutApi";
+import { mountTurnstile } from "./turnstile";
+import { readAttempt, saveAttempt, forgetAttempt, type OrderAttempt } from "./orderSession";
 import { formatEuros, getCartCount, getCartLines, getCartTotalCents } from "../utils/pizzaCart";
 import { validateCustomer } from "../utils/orderValidation";
 import type { CustomerDetails } from "../types/order";
@@ -14,9 +15,19 @@ function initializeCheckout(root: HTMLElement): void {
   const form = query<HTMLFormElement>("[data-details-form]");
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-checkout-step]"));
   let activeStep = 1;
-  const openedDate = parisDateKey(new Date());
-  let pickupState = getCheckoutPickupState(new Date(), openedDate);
-  let availabilitySignature = "";
+  let openedDate = "";
+  let pickupState: LivePickupAvailability | null = null;
+  let availabilityError = "";
+  let refreshing: Promise<void> | null = null;
+  let sending = false;
+  let submissionLocked = false;
+  let confirmed = false;
+  let botToken = "";
+  let botReset: (() => void) | undefined;
+  let botMounted = false;
+  let attempt: OrderAttempt | null = null;
+  try { attempt = readAttempt(sessionStorage); } catch { /* Only memory fallback; submission requires persistence. */ }
+  let pendingBody: SubmitOrderRequest | null = null;
   let serviceId = "";
   let slotId = "";
   let customer: CustomerDetails | null = null;
@@ -45,52 +56,80 @@ function initializeCheckout(root: HTMLElement): void {
     globalError();
     if (focus) panels.find((panel) => !panel.hidden)?.querySelector<HTMLElement>("h2")?.focus();
   }
+  const sendButton = query<HTMLButtonElement>("[data-order-send]");
+  const dateChanged = (): boolean => !!pickupState && !!openedDate && pickupState.date !== openedDate;
+  const canChoose = (): boolean => !confirmed && !availabilityError && !dateChanged() && pickupState?.state === "available";
+  const selectedSlot = () => canChoose() ? pickupState?.slots.find(slot => slot.id === slotId && slot.state === "available") : null;
+  function apiMessage(code: string): string {
+    return copy.apiErrors[code as keyof typeof copy.apiErrors] ?? copy.apiErrors.unknown;
+  }
+  function renderSend(): void {
+    sendButton.disabled = submissionLocked || sending || !customer || (!pendingBody && (!selectedSlot() || !botToken));
+    root.querySelectorAll<HTMLButtonElement>("[data-checkout-back]").forEach(button => {button.disabled=!!pendingBody || sending || submissionLocked;});
+    sendButton.textContent = sending ? copy.sending : pendingBody ? copy.retry : copy.send;
+  }
   function renderSlots(): void {
-    const service = pickupState.canChooseSlot ? pickupState.service : null;
+    const service = canChoose() ? pickupState?.service : null;
     slots.replaceChildren(new Option(service ? copy.pickup.selectSlot : copy.pickup.unavailableSlot, ""));
     slots.disabled = !service;
-    service?.slots.forEach((slot) => slots.add(new Option(slot.label, slot.id)));
+    if (service) for (const slot of pickupState!.slots) {
+      const option = new Option(slot.label.replace(":", "h") + (slot.state === "full" ? ` — ${copy.fullSlot}` : slot.state === "unavailable" ? ` — ${copy.unavailableSlotLabel}` : ""), slot.id);
+      option.disabled = slot.state !== "available";
+      slots.add(option);
+    }
     slots.value = slotId;
     query("[data-pickup-slot-field]").hidden = !service;
-    query<HTMLButtonElement>("[data-pickup-next]").disabled = !service || !slotId;
+    query<HTMLButtonElement>("[data-pickup-next]").disabled = !selectedSlot();
+    renderSend();
   }
-  function refreshAvailability(): void {
-    const now = new Date();
-    pickupState = getCheckoutPickupState(now, openedDate);
-    const signature = JSON.stringify(pickupState);
-    if (signature === availabilitySignature) return;
-    availabilitySignature = signature;
-    const wasSelected = !!slotId;
-    const valid = pickupState.canChooseSlot && validateTodayPickupRequest({ serviceId, slotId }, now).ok;
-    serviceId = pickupState.canChooseSlot ? pickupState.service!.id : "";
-    if (!valid) slotId = "";
-    query("[data-pickup-date]").textContent = pickupState.dateLabel;
-    const service = pickupState.service;
+  function renderAvailability(): void {
+    const service = pickupState?.service;
+    query("[data-pickup-service-card]").hidden = !pickupState;
+    const hasSlots = pickupState?.slots.some(slot => slot.state === "available");
+    query("[data-pickup-date]").textContent = pickupState ? new Intl.DateTimeFormat("fr-FR", {weekday:"long",day:"numeric",month:"long",timeZone:"Europe/Paris"}).format(new Date(`${pickupState.date}T12:00:00Z`)) : "";
     query("[data-today-service]").hidden = !service;
     query("[data-pickup-village]").textContent = service?.village ?? "";
     query("[data-pickup-address]").textContent = service?.address ?? copy.pickup.addressPending;
-    query("[data-pickup-hours]").textContent = service?.hours ?? "";
-    query("[data-pickup-closed]").hidden = pickupState.canChooseSlot;
-    query("[data-pickup-closed-message]").textContent = pickupState.dateChanged ? copy.pickup.dateChanged : pickupState.status === "closed" ? copy.pickup.closed : pickupState.status === "finished" ? copy.pickup.finished : copy.pickup.noSlots;
-    const next = pickupState.nextService;
-    query("[data-pickup-next-service]").hidden = !next;
-    query("[data-pickup-next-service]").textContent = next ? copy.pickup.nextService(next.village, next.dateLabel, next.hours) : "";
-    query("[data-pickup-reload]").hidden = !pickupState.dateChanged;
+    query("[data-pickup-hours]").textContent = service ? `${service.openingTime.replace(":","h")} – ${service.closingTime.replace(":","h")}` : "";
+    query("[data-pickup-closed]").hidden = canChoose() && !!hasSlots;
+    query("[data-pickup-closed-message]").textContent = availabilityError || (dateChanged() ? copy.pickup.dateChanged : pickupState?.reason === "finished" ? copy.pickup.finished : !service ? copy.pickup.closed : copy.pickup.noSlots);
+    query("[data-pickup-next-service]").hidden = true;
+    query("[data-pickup-reload]").hidden = !dateChanged();
+    query("[data-checkout-notice]").textContent = availabilityError || copy.provisionalNotice;
+    if(pickupState?.minimumLeadMinutes !== undefined)query("[data-pickup-time-help]").textContent=copy.pickup.timeHelp(pickupState.minimumLeadMinutes);
     renderSlots();
-    if ((wasSelected || activeStep > 1) && !valid) {
-      goToStep(1, getCartCount(cart) > 0);
-      const message = pickupState.dateChanged ? copy.pickup.dateChanged : copy.errors.expired;
-      globalError(message);
-      pickupError(message);
-    }
   }
-  function validatePickup(): boolean {
-    refreshAvailability();
-    if (pickupState.canChooseSlot && validateTodayPickupRequest({ serviceId, slotId }, new Date()).ok) return true;
-    if (activeStep !== 1) goToStep(1);
-    const message = pickupState.dateChanged ? copy.pickup.dateChanged : copy.errors.pickup;
-    globalError(message);
-    pickupError(message);
+  function refreshAvailability(): Promise<void> {
+    if (confirmed || sending) return Promise.resolve();
+    if (refreshing) return refreshing;
+    refreshing = (async () => {
+      try {
+        const count = getCartCount(cart);
+        const response = await fetch(`/api/pickup-slots?quantity=${count || 1}`, {cache:"no-store",signal:AbortSignal.timeout(12000)});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "TEMPORARILY_UNAVAILABLE");
+        pickupState = data as LivePickupAvailability;
+        openedDate ||= pickupState.date;
+        availabilityError = "";
+        serviceId = canChoose() ? pickupState.service?.id ?? "" : "";
+        if (slotId && !selectedSlot()) {
+          slotId = "";
+          if (!pendingBody) { goToStep(1, getCartCount(cart)>0); globalError(dateChanged() ? copy.pickup.dateChanged : copy.errors.expired); }
+        }
+      } catch (error) {
+        const code = error instanceof Error ? error.message : "";
+        availabilityError = code === "NOT_CONFIGURED" ? copy.notConfigured : code in copy.apiErrors ? apiMessage(code) : copy.liveUnavailable;
+      }
+      renderAvailability();
+    })().finally(() => { refreshing = null; });
+    return refreshing;
+  }
+  async function validatePickup(): Promise<boolean> {
+    await refreshAvailability();
+    if (selectedSlot()) return true;
+    goToStep(1);
+    const message = availabilityError || (dateChanged() ? copy.pickup.dateChanged : copy.errors.pickup);
+    globalError(message); pickupError(message);
     if (!slots.disabled) slots.focus();
     return false;
   }
@@ -102,20 +141,21 @@ function initializeCheckout(root: HTMLElement): void {
     };
   }
   function renderReview(): void {
-    const pickup = validateTodayPickupRequest({ serviceId, slotId }, new Date());
-    if (!pickup.ok || !customer) return;
+    const service = pickupState?.service;
+    const slot = selectedSlot();
+    if (!service || !slot || !customer) return;
     const review = {
-      date: pickup.service.dateLabel, village: pickup.service.village,
-      address: pickup.service.address ?? copy.pickup.addressPending,
-      slot: pickup.slot.label, name: `${customer.firstName} ${customer.lastName}`,
+      date: query("[data-pickup-date]").textContent ?? "", village: service.village,
+      address: service.address ?? copy.pickup.addressPending,
+      slot: slot.label.replace(":","h"), name: `${customer.firstName} ${customer.lastName}`,
       phone: customer.phone, comment: customer.comment || copy.review.noComment,
     };
     for (const [key, value] of Object.entries(review)) query(`[data-review="${key}"]`).textContent = value;
   }
   function renderCart(): void {
     const count = getCartCount(cart);
-    empty.hidden = count > 0;
-    content.hidden = count === 0;
+    empty.hidden = confirmed || count > 0;
+    content.hidden = confirmed || count === 0;
     if (!count) goToStep(1, false);
     query("[data-checkout-count]").textContent = `(${count})`;
     query("[data-checkout-total]").textContent = formatEuros(getCartTotalCents(cart));
@@ -142,16 +182,17 @@ function initializeCheckout(root: HTMLElement): void {
     slotId = slots.value;
     pickupError();
     globalError();
-    query<HTMLButtonElement>("[data-pickup-next]").disabled = !pickupState.canChooseSlot || !slotId;
+    query<HTMLButtonElement>("[data-pickup-next]").disabled = !selectedSlot();
+    renderSend();
   });
   query("[data-pickup-reload]").addEventListener("click", () => window.location.reload());
-  query("[data-pickup-next]").addEventListener("click", () => { if (validatePickup()) goToStep(2); });
+  query("[data-pickup-next]").addEventListener("click", async () => { if (await validatePickup()) goToStep(2); });
   root.querySelectorAll<HTMLElement>("[data-checkout-back]").forEach((button) => {
     button.addEventListener("click", () => { refreshAvailability(); goToStep(Math.max(1, activeStep - 1)); });
   });
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!getCartCount(cart) || !validatePickup()) return;
+    if (!getCartCount(cart) || !(await validatePickup())) return;
     const result = validateCustomer(readCustomer());
     root.querySelectorAll<HTMLElement>("[data-error-for]").forEach((node) => {
       const key = node.dataset.errorFor as keyof CustomerDetails;
@@ -167,15 +208,86 @@ function initializeCheckout(root: HTMLElement): void {
     customer = result.value;
     renderReview();
     goToStep(3);
+    if (!botMounted && pickupState?.turnstileSiteKey) {
+      botMounted = true;
+      try { botReset = await mountTurnstile(query("[data-turnstile]"), pickupState.turnstileSiteKey, token => {botToken=token;renderSend();}); }
+      catch {botMounted=false;globalError(copy.apiErrors.VERIFICATION_UNAVAILABLE);}
+    }
+    renderSend();
   });
 
-  refreshAvailability();
+  function showConfirmation(receipt: OrderReceipt): void {
+    confirmed = true;
+    // Only a successful server receipt permits removal of the submitted quantities.
+    // Keep pizzas added meanwhile, including changes received from another tab.
+    if (attempt && !attempt.consumed) {
+      attempt.consumed = true;
+      try { saveAttempt(sessionStorage, attempt); } catch { /* receipt already confirmed */ }
+      for (const line of receipt.lines) cartStore.setQuantity(line.pizzaId, Math.max(0,(cartStore.getSnapshot()[line.pizzaId] ?? 0)-line.quantity));
+    }
+    content.hidden=true; empty.hidden=true;
+    query("[data-order-confirmation]").hidden=false;
+    query("[data-confirmation-reference]").textContent=receipt.orderNumber;
+    query("[data-confirmation-status]").textContent=copy.confirmation.statuses[receipt.status];
+    query("[data-confirmation-pending]").hidden=receipt.status!=="pending";
+    query("[data-confirmation-expiry]").hidden=receipt.status!=="pending";
+    query("[data-confirmation-expiry-note]").hidden=receipt.status!=="pending";
+    const values={date:receipt.date,village:receipt.village,slot:receipt.pickupTime.replace(":","h"),total:formatEuros(receipt.totalCents),expires:new Intl.DateTimeFormat("fr-FR",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Paris"}).format(new Date(receipt.expiresAt))};
+    for(const [key,value] of Object.entries(values))query(`[data-confirmation="${key}"]`).textContent=value;
+    query("[data-checkout-notice]").hidden=true;
+    query("#confirmation-title").focus();
+  }
+  async function recover(): Promise<boolean> {
+    if(!attempt)return false;
+    const response=await fetch("/api/orders",{headers:{"X-Order-Request-Key":attempt.key},cache:"no-store",signal:AbortSignal.timeout(12000)});
+    if(!response.ok)return false;
+    const {receipt}=await response.json() as {receipt:OrderReceipt|null};
+    if(!receipt)return false;
+    showConfirmation(receipt);return true;
+  }
+  query("[data-order-confirmation] a").addEventListener("click",()=>{try{forgetAttempt(sessionStorage);}catch{/* no PII stored */}});
+  sendButton.addEventListener("click",async()=>{
+    if(submissionLocked||sending||confirmed)return;
+    submissionLocked=true;renderSend();
+    try {
+    if(pendingBody){
+      try{if(await recover())return;}catch{/* Retry the exact same idempotent request. */}
+    } else {
+      if(!customer||!(await validatePickup())||!botToken||!pickupState?.service)return;
+      const lines=getCartLines(cart).map(({pizzaId,quantity})=>({pizzaId,quantity}));
+      attempt ??= {key:crypto.randomUUID(),lines,consumed:false};
+      // Persist just the capability UUID and pizza quantities, never contact information.
+      try{saveAttempt(sessionStorage,attempt);}catch{globalError(copy.storageUnavailable);return;}
+      pendingBody={idempotencyKey:attempt.key,lines,serviceId,slotId,date:pickupState.date,village:pickupState.service.village,customer,turnstileToken:botToken};
+    }
+    sending=true;renderSend();globalError();
+    try {
+      // A fresh bot token may replace an expired token; it is excluded from the SQL fingerprint.
+      const body={...pendingBody,turnstileToken:botToken || pendingBody!.turnstileToken};
+      const response=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+      const result=await response.json() as {receipt?:OrderReceipt;error?:string};
+      if(response.ok&&result.receipt){showConfirmation(result.receipt);return;}
+      const code=result.error??"unknown";
+      if(response.status===409&&code==="IDEMPOTENCY_CONFLICT"){if(await recover())return;}
+      // 4xx business errors are definitive non-insertions. Network/5xx retain the key and frozen request.
+      if(response.status>=400&&response.status<500&&code!=="IDEMPOTENCY_CONFLICT"&&code!=="BOT_VERIFICATION_FAILED"){
+        pendingBody=null;attempt=null;try{forgetAttempt(sessionStorage);}catch{/* memory state remains */}
+        await refreshAvailability();goToStep(1);
+      }
+      globalError(apiMessage(code));
+    } catch {globalError(copy.apiErrors.unknown);}
+    finally{sending=false;botReset?.();renderSend();}
+    } finally { submissionLocked=false;renderSend(); }
+  });
   goToStep(1, false);
-  // Les coordonnées ne rejoignent jamais ce store ; seul le panier est persisté.
-  cartStore.subscribe((value) => { cart = value; renderCart(); if (activeStep === 3) { refreshAvailability(); renderReview(); } });
-  query("[data-checkout-loading]").hidden = true;
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refreshAvailability(); });
-  window.setInterval(() => { if (document.visibilityState === "visible") refreshAvailability(); }, 30_000);
+  // The cart remains the existing shared store, with no contact details.
+  cartStore.subscribe((value) => { cart=value;renderCart();if(!confirmed){void refreshAvailability();if(activeStep===3)renderReview();} });
+  void (async()=>{
+    try{if(await recover())return;}catch{/* Availability still fails closed if the backend is unavailable. */}
+    await refreshAvailability();
+  })().finally(()=>{query("[data-checkout-loading]").hidden=true;});
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")void refreshAvailability();});
+  window.setInterval(()=>{if(document.visibilityState==="visible")void refreshAvailability();},30000);
 }
 
 const root = document.querySelector<HTMLElement>("[data-checkout]");
