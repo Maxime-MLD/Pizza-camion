@@ -163,3 +163,81 @@ test('Déploiement : commandes désactivées par défaut, aucune requête Supaba
  }
  assert.equal(calls,0);
 });
+
+test('Turnstile : jeton absent, invalide, expiré ou réutilisé ne crée aucune commande',async()=>{
+ let writes=0;let verifications=0;
+ const rpc:Rpc=async<T>(name:string)=>{if(name==='forno_rate_limit')return true as T;writes++;throw Error('unexpected write');};
+ const transport:typeof fetch=async()=>{verifications++;return Response.json({success:false,'error-codes':['timeout-or-duplicate']});};
+ for(const token of ['',undefined]){
+  const response=await handleOrdersApi(request({...base(),turnstileToken:token}),env,'ip',{rpc,transport});
+  assert.equal(response.status,400);assert.equal((await response.json()).error,'INVALID_REQUEST');
+ }
+ assert.equal(verifications,0);
+ for(const code of ['invalid-input-response','timeout-or-duplicate']){
+  const response=await handleOrdersApi(request(),env,'ip',{rpc,transport:async()=>Response.json({success:false,'error-codes':[code]})});
+  assert.equal(response.status,400);assert.equal((await response.json()).error,'BOT_VERIFICATION_FAILED');
+ }
+ assert.equal(writes,0);
+});
+test('Turnstile : domaine, action et succès stricts, y compris avec la réponse des clés officielles de test',async()=>{
+ let writes=0;
+ const rpc:Rpc=async<T>(name:string)=>{if(name==='forno_rate_limit')return true as T;writes++;throw Error('unexpected write');};
+ for(const check of [
+  {success:true,hostname:'evil.test',action:'order'},
+  {success:true,hostname:'forno.test',action:'other'},
+  {success:true,hostname:'forno.test'},
+  {success:'true',hostname:'forno.test',action:'order'},
+  {success:true,hostname:'example.com',metadata:{result_with_testing_key:true}},
+ ]){
+  const response=await handleOrdersApi(request(),env,'ip',{rpc,transport:async()=>Response.json(check)});
+  assert.equal(response.status,400);assert.equal((await response.json()).error,'BOT_VERIFICATION_FAILED');
+ }
+ assert.equal(writes,0);
+});
+test('Turnstile : panne réseau ou réponse illisible ferme la commande sans insertion',async()=>{
+ let writes=0;
+ const rpc:Rpc=async<T>(name:string)=>{if(name==='forno_rate_limit')return true as T;writes++;throw Error('unexpected write');};
+ for(const transport of [async()=>{throw new Error('network');},async()=>new Response('bad'),async()=>new Response(null,{status:503})] as typeof fetch[]){
+  const response=await handleOrdersApi(request(),env,'ip',{rpc,transport});assert.equal(response.status,503);
+ }
+ assert.equal(writes,0);
+});
+test('Turnstile : le renouvellement du jeton change sa clé de vérification sans changer l’idempotence de la commande',async()=>{
+ const value=base();const validationKeys:string[]=[];const hashes:string[]=[];
+ const rpc:Rpc=async<T>(name:string,args:Record<string,unknown>)=>{
+  if(name==='forno_rate_limit')return true as T;
+  assert.equal(name,'forno_create_order');
+  assert.equal((args.p_request as typeof value).idempotencyKey,value.idempotencyKey);
+  hashes.push(args.p_request_hash as string);
+  return {orderNumber:'F-TEST',status:'pending'} as T;
+ };
+ const transport:typeof fetch=async(url,init)=>{
+  assert.equal(url,'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+  const body=JSON.parse(String(init?.body));
+  assert.equal(body.secret,env.TURNSTILE_SECRET_KEY);
+  validationKeys.push(body.idempotency_key);
+  assert.match(body.idempotency_key,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+  return Response.json({success:true,hostname:'forno.test',action:'order'});
+ };
+ for(const token of ['old-token','old-token','renewed-token']){
+  const response=await handleOrdersApi(request({...value,turnstileToken:token}),env,'ip',{rpc,transport});assert.equal(response.status,201);
+ }
+ assert.equal(validationKeys[0],validationKeys[1]);assert.notEqual(validationKeys[0],validationKeys[2]);
+ assert.equal(new Set(hashes).size,1);
+});
+test('API : contrat de lecture avec RPC injectée sans report à demain, erreurs SQL métier conservées',async()=>{
+ const rpc:Rpc=async<T>(name:string,args:Record<string,unknown>)=>{
+  if(name==='forno_rate_limit')return true as T;
+  assert.equal(name,'forno_pickup_slots');assert.equal(args.p_quantity,2);
+  return {date:'2026-11-01',state:'unavailable',reason:'closed',service:null,slots:[]} as T;
+ };
+ const response=await handleOrdersApi(new Request('https://forno.test/api/pickup-slots?quantity=2'),env,'ip',{rpc});
+ const data=await response.json();assert.equal(data.service,null);assert.deepEqual(data.slots,[]);
+ assert.equal(data.date,'2026-11-01');assert.equal(data.turnstileSiteKey,env.TURNSTILE_SITE_KEY);
+ for(const code of ['WRONG_SERVICE','SERVICE_CLOSED','SLOT_EXPIRED','SLOT_UNAVAILABLE','SLOT_FULL','IDEMPOTENCY_CONFLICT']){
+  const response=await handleOrdersApi(request(),env,'ip',{transport:verify,rpc:async<T>(name:string)=>{
+   if(name==='forno_rate_limit')return true as T;throw new DatabaseError(code);
+  }});
+  assert.equal(response.status,409);assert.equal((await response.json()).error,code);
+ }
+});

@@ -14,6 +14,7 @@
     "check:todo": "node scripts/check-todos.mjs",
     "validate:production": "npm run check:todo && npm run check && npm run build",
     "test:orders": "node --test scripts/test-orders.mjs",
+    "test:turnstile:network": "node scripts/verify-turnstile-network.mjs",
     "build:sites": "FORNO_DEPLOY_TARGET=sites astro build && node scripts/package-astro-worker.mjs"
   },
   "dependencies": {

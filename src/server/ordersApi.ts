@@ -11,6 +11,12 @@ async function abuseKey(salt: string, ip: string, purpose: string): Promise<stri
   const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(salt),{name:'HMAC',hash:'SHA-256'},false,['sign']);
   return hex(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`${purpose}:${ip}`)));
 }
+async function verificationKey(orderKey: string, token: string): Promise<string> {
+  // A Siteverify retry identifies the same token, not every token of the order.
+  // Renewing an expired challenge must not reuse its previous validation key.
+  const digest=await requestDigest([orderKey,token]);
+  return `${digest.slice(0,8)}-${digest.slice(8,12)}-4${digest.slice(13,16)}-${((parseInt(digest[16]!,16)&3)|8).toString(16)}${digest.slice(17,20)}-${digest.slice(20,32)}`;
+}
 interface ApiDependencies { rpc?: Rpc; transport?: typeof fetch; }
 /** Dependency injection is for tests only. Production receives runtime bindings and trusted edge IP. */
 export async function handleOrdersApi(request: Request, env: OrderEnvironment, ip: string, dependencies: ApiDependencies={}): Promise<Response> {
@@ -53,11 +59,11 @@ export async function handleOrdersApi(request: Request, env: OrderEnvironment, i
     const transport=dependencies.transport??fetch;
     const verification=await transport('https://challenges.cloudflare.com/turnstile/v0/siteverify',{
       method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(10000),
-      body:JSON.stringify({secret:env.TURNSTILE_SECRET_KEY,response:turnstileToken,idempotency_key:order.idempotencyKey}),
+      body:JSON.stringify({secret:env.TURNSTILE_SECRET_KEY,response:turnstileToken,idempotency_key:await verificationKey(order.idempotencyKey,turnstileToken)}),
     });
     if(!verification.ok) return failure('VERIFICATION_UNAVAILABLE',503);
     const check=await verification.json() as {success?:boolean;hostname?:string;action?:string};
-    if(!check.success||check.hostname!==url.hostname||check.action!=='order')return failure('BOT_VERIFICATION_FAILED',400);
+    if(check.success!==true||check.hostname!==url.hostname||check.action!=='order')return failure('BOT_VERIFICATION_FAILED',400);
     const receipt=await rpc<OrderReceipt|{error:string}>('forno_create_order',{
       p_request:order,p_request_hash:await requestDigest(order),p_abuse_key:await abuseKey(env.ORDER_RATE_LIMIT_SALT!,ip,'order'),
     });

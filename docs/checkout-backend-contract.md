@@ -1,5 +1,7 @@
 # Commandes FORNO — Supabase / Sites
 
+> Historique de l'implémentation initiale Sites. Pour l'état réellement observé sur Vercel et Supabase le 28 octobre 2026, consulter [l'audit d'intégration](orders-integration-audit.md). La configuration Vercel actuelle est décrite dans [vercel-deployment.md](vercel-deployment.md). Le verrou global `FORNO_ORDERS_ENABLED` reste fermé par défaut ; la présence de secrets ne suffit pas à ouvrir les commandes.
+
 ## État et architecture
 
 Astro reste le framework principal ; aucun composant React ni SDK navigateur Supabase. L’adapter officiel Cloudflare rend uniquement les routes API à la demande (`prerender=false`). Les pages publiques et le tunnel sont prérendus, avec leurs images optimisées à la compilation. Le build assemble un Worker ESM `dist/server/index.js` et les ressources `dist/client` pour l’hébergement Sites existant. `session:false` évite un binding KV inutile. Aucun changement de design des sections publiques.

@@ -42,7 +42,7 @@ export const checkoutConfig = {
     expiresLabel: "Échéance de la demande",
     payment: "Vous réglerez directement au camion lors du retrait.",
     back: "RETOUR À LA CARTE",
-    statuses: { pending: "En attente d’acceptation", accepted: "Acceptée", rejected: "Refusée", preparing: "En préparation", ready: "Prête", completed: "Terminée", cancelled: "Annulée ou expirée" },
+    statuses: { pending: "En attente de confirmation", accepted: "Acceptée", rejected: "Refusée", preparing: "En préparation", ready: "Prête", completed: "Terminée", cancelled: "Annulée ou expirée" },
   },
   apiErrors: {
     ORDERS_DISABLED: "Les commandes en ligne ne sont pas encore activées. Consultez le planning pour retrouver le camion.",
