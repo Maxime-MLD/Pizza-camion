@@ -7,6 +7,8 @@ import {handleOrdersApi,requestDigest} from '../src/server/ordersApi';
 import {orderRequestSchema} from '../src/server/orderSchema';
 import {createRpc,DatabaseError,type Rpc} from '../src/server/supabase';
 import {readAttempt,saveAttempt} from '../src/scripts/orderSession';
+import {safeOrderEnvironment,validTurnstileResponse} from '../src/server/orderEnvironmentGuard';
+import {orderEnvironments} from '../src/config/order-environments.config';
 const db=new PGlite();
 const env={FORNO_ORDERS_ENABLED:'true',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SECRET_KEY:'unit-test-only',ORDER_RATE_LIMIT_SALT:'test-salt-with-at-least-thirty-two-characters',TURNSTILE_SITE_KEY:'test-site',TURNSTILE_SECRET_KEY:'test-secret'};
 before(async()=>{
@@ -240,4 +242,39 @@ test('API : contrat de lecture avec RPC injectée sans report à demain, erreurs
   }});
   assert.equal(response.status,409);assert.equal((await response.json()).error,code);
  }
+});
+
+const previewEnv={...env,VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:orderEnvironments.testBranch,
+ SUPABASE_URL:`https://${orderEnvironments.testSupabaseRef}.supabase.co`,FORNO_TURNSTILE_MODE:'official-test',
+ TURNSTILE_SITE_KEY:'1x00000000000000000000AA',TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA'};
+test('Isolation : Preview exige la branche et la base de test exactes avant tout appel réseau',async()=>{
+ assert.equal(safeOrderEnvironment(previewEnv),true);
+ const forbidden=[
+  {...previewEnv,VERCEL_ENV:'production'},
+  {...previewEnv,VERCEL_ENV:undefined},
+  {...previewEnv,VERCEL_GIT_COMMIT_REF:'main'},
+  {...previewEnv,SUPABASE_URL:`https://${orderEnvironments.productionSupabaseRef}.supabase.co`},
+  {...previewEnv,SUPABASE_URL:`https://${orderEnvironments.testSupabaseRef}.supabase.co.evil.test`},
+  {...previewEnv,SUPABASE_URL:`https://evil@${orderEnvironments.testSupabaseRef}.supabase.co`},
+  {...previewEnv,SUPABASE_URL:'bad'},
+  {...previewEnv,FORNO_TURNSTILE_MODE:'real'},
+  {...env,TURNSTILE_SITE_KEY:previewEnv.TURNSTILE_SITE_KEY},
+ ];
+ for(const bad of forbidden){
+  assert.equal(safeOrderEnvironment(bad),false);
+  let calls=0;const rpc:Rpc=async<T>()=>{calls++;return true as T;};
+  const response=await handleOrdersApi(request(),bad,'ip',{rpc});
+  assert.equal(response.status,503);assert.equal(calls,0);
+ }
+});
+test('Isolation : mode officiel valide réellement Siteverify et sa réponse de test, jamais en Production',async()=>{
+ const demo={success:true,hostname:'example.com',metadata:{result_with_testing_key:true}};
+ assert.equal(validTurnstileResponse(demo,'preview.test',previewEnv),true);
+ assert.equal(validTurnstileResponse(demo,'example.com',env),false);
+ for(const check of [null,{}, {...demo,success:false},{...demo,metadata:{}},{...demo,hostname:'evil.test'},{...demo,action:'other'}])
+  assert.equal(validTurnstileResponse(check,'preview.test',previewEnv),false);
+ let verified=false;let inserted=false;
+ const rpc:Rpc=async<T>(name:string)=>{if(name==='forno_rate_limit')return true as T;assert.equal(verified,true);inserted=true;return {orderNumber:'F-TEST',status:'pending'} as T;};
+ const response=await handleOrdersApi(request(),previewEnv,'ip',{rpc,transport:async()=>{verified=true;return Response.json(demo);}});
+ assert.equal(response.status,201);assert.equal(inserted,true);
 });

@@ -31,12 +31,17 @@ try {
       transport,
       rpc:async(name)=>{if(name==='forno_rate_limit')return true;creations++;throw Error('No database writes allowed');},
     });
+    // Default deployment now rejects official dummy keys before any network access.
+    assert.equal(response.status,503);assert.equal((await response.json()).error,'NOT_CONFIGURED');
+    assert.equal(calls,0);assert.equal(creations,0);
+    const cloudflare=await transport('https://challenges.cloudflare.com/turnstile/v0/siteverify',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:scenario.key,response:'XXXX.DUMMY.TOKEN.XXXX'}),signal:AbortSignal.timeout(10000),
+    });
+    await cloudflare.arrayBuffer();
     assert.equal(calls,1);assert.equal(result.success,scenario.success);
     if(scenario.error)assert.ok(result['error-codes'].includes(scenario.error));
     // The dummy passing response uses example.com and lacks action=order.
     // Keep real hostname/action checks intact; dummy success cannot prove an order flow.
-    assert.equal(response.status,400);assert.equal((await response.json()).error,'BOT_VERIFICATION_FAILED');
-    assert.equal(creations,0);
-    console.log(`${scenario.name}: Cloudflare reached; response verified; application refused; zero order RPCs.`);
+    console.log(`${scenario.name}: Cloudflare reached; response verified; dummy credentials blocked outside isolated Preview; zero order RPCs.`);
   }
 } finally {await rm(directory,{recursive:true,force:true});}

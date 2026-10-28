@@ -1,6 +1,7 @@
 import { orderRequestSchema } from './orderSchema';
 import { configured, createRpc, DatabaseError, type OrderEnvironment, type Rpc } from './supabase';
 import type { LivePickupAvailability, OrderReceipt } from '../types/checkoutApi';
+import { safeOrderEnvironment, validTurnstileResponse } from './orderEnvironmentGuard';
 export const json = (body: unknown, status=200): Response => Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Origin'}});
 export const failure = (error: string,status: number): Response => json({error},status);
 const hex = (bytes: ArrayBuffer): string => Array.from(new Uint8Array(bytes),(v)=>v.toString(16).padStart(2,'0')).join('');
@@ -27,6 +28,7 @@ export async function handleOrdersApi(request: Request, env: OrderEnvironment, i
   if(request.headers.get('Sec-Fetch-Site')==='cross-site' || (request.method==='POST' && request.headers.get('Origin')!==url.origin)) return failure('FORBIDDEN',403);
   // Deployment must never open ordering merely because credentials are configured.
   if(env.FORNO_ORDERS_ENABLED !== 'true') return failure('ORDERS_DISABLED',503);
+  if(!safeOrderEnvironment(env))return failure('NOT_CONFIGURED',503);
   if(!configured(env)) return failure('NOT_CONFIGURED',503);
   const rpc=dependencies.rpc??createRpc(env,dependencies.transport);
   try {
@@ -62,8 +64,8 @@ export async function handleOrdersApi(request: Request, env: OrderEnvironment, i
       body:JSON.stringify({secret:env.TURNSTILE_SECRET_KEY,response:turnstileToken,idempotency_key:await verificationKey(order.idempotencyKey,turnstileToken)}),
     });
     if(!verification.ok) return failure('VERIFICATION_UNAVAILABLE',503);
-    const check=await verification.json() as {success?:boolean;hostname?:string;action?:string};
-    if(check.success!==true||check.hostname!==url.hostname||check.action!=='order')return failure('BOT_VERIFICATION_FAILED',400);
+    const check:unknown=await verification.json();
+    if(!validTurnstileResponse(check,url.hostname,env))return failure('BOT_VERIFICATION_FAILED',400);
     const receipt=await rpc<OrderReceipt|{error:string}>('forno_create_order',{
       p_request:order,p_request_hash:await requestDigest(order),p_abuse_key:await abuseKey(env.ORDER_RATE_LIMIT_SALT!,ip,'order'),
     });

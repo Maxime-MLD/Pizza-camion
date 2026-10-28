@@ -1,6 +1,9 @@
 /** Server-only native PostgREST client: no browser SDK, cookies or user session. */
 export interface OrderEnvironment {
   FORNO_ORDERS_ENABLED?: string;
+  FORNO_TURNSTILE_MODE?: string;
+  VERCEL_ENV?: string;
+  VERCEL_GIT_COMMIT_REF?: string;
   SUPABASE_URL?: string;
   SUPABASE_SECRET_KEY?: string;
   ORDER_RATE_LIMIT_SALT?: string;
