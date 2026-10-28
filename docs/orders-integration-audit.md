@@ -1,5 +1,7 @@
 # Validation des commandes FORNO — 28 octobre 2026
 
+> Suite de cet audit : [environnement Test et vérifications réelles](orders-preview-validation.md). Le présent document conserve l'état constaté pendant l'audit initial.
+
 ## Conclusion
 
 **Pas prêt pour l'ouverture.** La production reste fermée. Aucun service activé, aucune commande créée, aucune maintenance exécutée, aucune donnée supprimée pendant cet audit. Les corrections et tests ajoutés sont locaux ; ils n'ont pas été déployés.
