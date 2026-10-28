@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { pickupAvailabilityConfig as defaults } from "../src/config/checkout.config";
 import { truckSchedule } from "../src/data/truckSchedule";
-import { addCalendarDays, findPickup, getPickupServices, parisDateKey, parisLocalToInstant } from "../src/utils/pickupAvailability";
+import { addCalendarDays, getCheckoutPickupState, getTodayPickupState, getPickupServices, parisDateKey, parisLocalToInstant } from "../src/utils/pickupAvailability";
+import { validateTodayPickupRequest } from "../src/utils/validateTodayPickup";
+import { getTodayDisplay } from "../src/utils/truckToday";
 import { normalizeFrenchPhone, validateCustomer } from "../src/utils/orderValidation";
 import { getCartCount, getCartLines, getCartTotalCents, sanitizeCart, setCartQuantity } from "../src/utils/pizzaCart";
 
@@ -54,15 +56,40 @@ test("les changements d'heure utilisent les vrais décalages Paris et excluent l
   assert.equal(parisLocalToInstant("2026-02-30", "18:00"), null);
 });
 
-test("la fenêtre contient 7 jours calendaires, des IDs datés uniques et aucun dimanche fermé", () => {
-  const services = getPickupServices(new Date("2026-10-27T12:00:00Z"));
-  assert.equal(services.length, 6);
-  assert.equal(services[0]?.village, "Vougy");
-  assert.equal(services[0]?.id, "forno-2026-10-27-2");
-  assert.equal(services.at(-1)?.date, "2026-11-02");
-  assert.ok(!services.some((service) => service.date === "2026-11-01"));
-  assert.equal(new Set(services.map((service) => service.id)).size, services.length);
-  assert.ok(services.every((service) => service.address === null && service.availability === "provisional"));
+test("mardi Vougy et mercredi Mably : un seul service du jour, conforme à la source de la Hero", () => {
+  for (const [date, village, id] of [["2026-10-27", "Vougy", "forno-2026-10-27-2"], ["2026-10-28", "Mably", "forno-2026-10-28-3"]]) {
+    const now = new Date(`${date}T12:00:00Z`);
+    const services = getPickupServices(now);
+    assert.equal(services.length, 1);
+    assert.equal(services[0]?.village, village);
+    assert.equal(services[0]?.village, getTodayDisplay(now).stop.village);
+    assert.equal(services[0]?.id, id);
+    assert.equal(services[0]?.date, parisDateKey(now));
+    assert.equal(services[0]?.address, null);
+    assert.equal(services[0]?.availability, "provisional");
+    assert.ok(services[0]?.slots.every((slot) => slot.serviceId === id));
+  }
+});
+
+test("dimanche fermé : prochain village informatif, aucun report de commande au lundi", () => {
+  const now = new Date("2026-11-01T12:00:00Z");
+  const state = getTodayPickupState(now);
+  assert.equal(state.status, "closed");
+  assert.equal(state.service, null);
+  assert.equal(state.nextService?.village, "Le Coteau");
+  assert.ok(!("slots" in state.nextService!));
+  assert.deepEqual(getPickupServices(now), []);
+  assert.equal(getCheckoutPickupState(now, "2026-11-01").canChooseSlot, false);
+});
+
+test("service terminé ou sans délai de préparation suffisant : validation bloquée sans service du lendemain", () => {
+  const finished = new Date("2026-10-27T21:00:00Z");
+  assert.equal(getTodayPickupState(finished).status, "finished");
+  assert.equal(getTodayPickupState(finished).nextService?.village, "Mably");
+  assert.deepEqual(getPickupServices(finished), []);
+  const noTime = new Date("2026-10-27T19:50:00Z"); // 20h50 Paris, aucun retrait possible avant la marge de fermeture.
+  assert.equal(getTodayPickupState(noTime).status, "unavailable");
+  assert.deepEqual(getPickupServices(noTime), []);
 });
 
 test("le délai minimum élimine les créneaux passés ; la fin de service garde sa marge", () => {
@@ -94,15 +121,45 @@ test("la génération traverse les deux changements d'heure même pour un servic
   const sunday = { ...truckSchedule[0]!, day: 0, dayLabel: "Dimanche" };
   const schedule = [...truckSchedule.filter((stop) => stop.day !== 0), sunday];
   for (const [date, expected] of [["2026-03-29", "2026-03-29T16:00:00.000Z"], ["2026-10-25", "2026-10-25T17:00:00.000Z"]]) {
-    const services = getPickupServices(new Date(`${date}T10:00:00Z`), { ...defaults, preorderDays: 1 }, schedule);
+    const services = getPickupServices(new Date(`${date}T10:00:00Z`), defaults, schedule);
     assert.equal(services[0]?.slots[0]?.pickupAt, expected);
   }
 });
 
-test("un créneau doit appartenir au service sélectionné ; configuration invalide sans boucle", () => {
-  const services = getPickupServices(new Date("2026-10-27T12:00:00Z"));
-  assert.ok(findPickup(services, services[0]!.id, services[0]!.slots[0]!.id));
-  assert.equal(findPickup(services, services[0]!.id, services[1]!.slots[0]!.id), null);
+test("la validation destinée au serveur recalcule le jour, le village et le créneau autorisés", () => {
+  const now = new Date("2026-10-27T12:00:00Z");
+  const service = getPickupServices(now)[0]!;
+  const request = { serviceId: service.id, slotId: service.slots[0]!.id, date: service.date, village: service.village };
+  assert.equal(validateTodayPickupRequest(request, now).ok, true);
+  for (const date of ["2026-10-26", "2026-10-28"]) {
+    assert.deepEqual(validateTodayPickupRequest({ ...request, date }, now), { ok: false, reason: "wrong_date" });
+  }
+  assert.deepEqual(validateTodayPickupRequest({ ...request, village: "Mably" }, now), { ok: false, reason: "wrong_village" });
+  assert.deepEqual(validateTodayPickupRequest({ ...request, serviceId: "forno-2026-10-28-3" }, now), { ok: false, reason: "wrong_service" });
+  assert.deepEqual(validateTodayPickupRequest({ ...request, slotId: "forno-2026-10-28-3@18:00" }, now), { ok: false, reason: "unavailable_slot" });
+  assert.deepEqual(validateTodayPickupRequest({ ...request, slotId: `${service.id}@22:00` }, now), { ok: false, reason: "unavailable_slot" });
+  assert.deepEqual(validateTodayPickupRequest(null, now), { ok: false, reason: "invalid_request" });
+  assert.equal(validateTodayPickupRequest(request, new Date("2026-10-27T21:00:00Z")).ok, false);
+  assert.equal(validateTodayPickupRequest(request, now, { ...defaults, exceptionalClosures: [service.date] }).ok, false);
+  assert.equal(validateTodayPickupRequest(request, now, { ...defaults, unavailableSlotIds: [request.slotId] }).ok, false);
+});
+
+test("un changement de date pendant le tunnel exige un redémarrage et invalide l'ancien service", () => {
+  const openedDate = "2026-10-27";
+  const before = getCheckoutPickupState(new Date("2026-10-27T19:00:00Z"), openedDate);
+  assert.equal(before.dateChanged, false);
+  assert.equal(before.canChooseSlot, true);
+  const request = { serviceId: before.service!.id, slotId: before.service!.slots[0]!.id };
+  const midnight = new Date("2026-10-27T23:01:00Z"); // Mercredi 00h01 Paris.
+  const after = getCheckoutPickupState(midnight, openedDate);
+  assert.equal(after.date, "2026-10-28");
+  assert.equal(after.dateChanged, true);
+  assert.equal(after.canChooseSlot, false);
+  assert.equal(validateTodayPickupRequest(request, midnight).ok, false);
+  assert.equal(getCheckoutPickupState(midnight, "2026-10-28").canChooseSlot, true);
+});
+
+test("configuration invalide : aucun créneau n'est autorisé", () => {
   assert.deepEqual(getPickupServices(new Date(), { ...defaults, slotIntervalMinutes: 0 }), []);
-  assert.deepEqual(getPickupServices(new Date(), { ...defaults, preorderDays: Infinity }), []);
+  assert.deepEqual(getPickupServices(new Date(), { ...defaults, minimumLeadMinutes: -1 }), []);
 });

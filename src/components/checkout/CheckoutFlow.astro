@@ -42,15 +42,28 @@ const reviewFields = ["date", "village", "address", "slot", "name", "phone", "co
           <section data-checkout-step="1" aria-labelledby="pickup-step-title" class="motion-safe:animate-[hero-visual-enter_200ms_var(--ease-premium)]">
             <h2 id="pickup-step-title" tabindex="-1" class="font-display text-[clamp(2rem,3vw,3rem)] leading-none font-extrabold">{copy.pickup.title}</h2>
             <p class="mt-4 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.pickup.description}</p>
-            <fieldset class="mt-7 min-w-0" aria-describedby="pickup-error">
-              <legend class="text-base font-bold">{copy.pickup.datesLabel}</legend>
-              <div data-pickup-dates class="mt-4 grid gap-3 sm:grid-cols-2"></div>
-              <p data-no-services hidden class="mt-4 text-sm leading-relaxed">{copy.pickup.noServices}</p>
-            </fieldset>
-            <p data-pickup-location hidden class="mt-5 text-sm leading-relaxed font-semibold"></p>
-            <div class="mt-6">
+            <div class="mt-7 rounded-lg border border-[var(--color-border-strong)] p-5">
+              <p class="text-xs font-extrabold tracking-wide text-[var(--color-primary-dark)]">{copy.pickup.todayLabel}</p>
+              <p data-pickup-date class="mt-3 font-semibold capitalize"></p>
+              <div data-today-service hidden>
+                <h3 data-pickup-village class="mt-2 font-display text-4xl leading-none font-extrabold uppercase"></h3>
+                <dl class="mt-5 space-y-3 text-sm">
+                  <div><dt class="font-bold">{copy.pickup.addressLabel}</dt><dd data-pickup-address class="mt-1 leading-relaxed"></dd></div>
+                  <div><dt class="font-bold">{copy.pickup.hoursLabel}</dt><dd data-pickup-hours class="mt-1"></dd></div>
+                </dl>
+              </div>
+            </div>
+            <div data-pickup-closed hidden role="status" class="mt-5 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] p-5">
+              <p data-pickup-closed-message class="font-semibold leading-relaxed"></p>
+              <p data-pickup-next-service hidden class="mt-3 text-sm leading-relaxed text-[var(--color-muted-foreground)]"></p>
+              <div class="mt-4 flex flex-wrap gap-3">
+                <a href={copy.pickup.planningHref} class={backButton}>{copy.pickup.planningLabel}</a>
+                <button data-pickup-reload type="button" hidden class="focus-ring min-h-12 rounded-full px-5 py-3 font-bold underline">{copy.pickup.reloadLabel}</button>
+              </div>
+            </div>
+            <div data-pickup-slot-field class="mt-6">
               <label for="pickup-slot" class="font-bold">{copy.pickup.slotLabel}</label>
-              <select id="pickup-slot" data-pickup-slot disabled class={fieldClass} aria-describedby="pickup-time-help pickup-error"><option value="">{copy.pickup.selectDateFirst}</option></select>
+              <select id="pickup-slot" data-pickup-slot disabled class={fieldClass} aria-describedby="pickup-time-help pickup-error"><option value="">{copy.pickup.selectSlot}</option></select>
               <p id="pickup-time-help" class="mt-3 text-sm leading-relaxed text-[var(--color-muted-foreground)]">{copy.pickup.timeHelp(pickupAvailabilityConfig.minimumLeadMinutes)}</p>
               <p id="pickup-error" data-pickup-error hidden class="mt-3 text-sm font-semibold text-[var(--color-primary-dark)]"></p>
             </div>

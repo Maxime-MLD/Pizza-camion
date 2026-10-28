@@ -43,57 +43,93 @@ export function parisLocalToInstant(date: string, time: string): Date | null {
 const minutes = (time: string): number => { const [h, m] = time.split(":").map(Number); return h! * 60 + m!; };
 const clock = (value: number): string => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 
+function createServiceForDate(
+  date: string,
+  now: Date,
+  rules: PickupAvailabilityConfig,
+  schedule: readonly TruckStop[],
+): PickupService | null {
+  if (rules.exceptionalClosures.includes(date)) return null;
+  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+  const stop = schedule.find((item) => item.day === weekday);
+  if (!stop || stop.status === "closed" || !stop.village || !stop.opens || !stop.closes) return null;
+  const serviceId = `forno-${date}-${weekday}`;
+  if (rules.unavailableServiceIds.includes(serviceId)) return null;
+  const open = parisLocalToInstant(date, stop.opens);
+  const close = parisLocalToInstant(date, stop.closes);
+  if (!open || !close || open >= close) return null;
+  const lastPickup = minutes(stop.closes) - rules.closingPreparationMinutes;
+  const earliest = now.getTime() + rules.minimumLeadMinutes * 60_000;
+  const slots: PickupSlot[] = [];
+  for (let value = minutes(stop.opens); value <= lastPickup; value += rules.slotIntervalMinutes) {
+    const time = clock(value);
+    const pickup = parisLocalToInstant(date, time);
+    const id = `${serviceId}@${time}`;
+    if (!pickup || pickup.getTime() < earliest || rules.unavailableSlotIds.includes(id)) continue;
+    slots.push({ id, serviceId, label: time.replace(":", "h"), pickupAt: pickup.toISOString() });
+  }
+  return {
+    id: serviceId, date,
+    dateLabel: new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: rules.timeZone }).format(new Date(`${date}T12:00:00Z`)),
+    village: stop.village,
+    address: stop.address && isConfiguredLinkValue(stop.address) ? stop.address : null,
+    opensAt: open.toISOString(), closesAt: close.toISOString(),
+    hours: stop.hours ?? `${stop.opens.replace(":", "h")} – ${stop.closes.replace(":", "h")}`,
+    slots, availability: "provisional",
+  };
+}
+
+export interface TodayPickupState {
+  date: string;
+  dateLabel: string;
+  status: "available" | "closed" | "finished" | "unavailable";
+  service: PickupService | null;
+  /** Information seule : aucun créneau ou identifiant de commande d'un autre jour n'est exposé. */
+  nextService: Pick<PickupService, "dateLabel" | "village" | "hours"> | null;
+}
+
+function validRules(now: Date, rules: PickupAvailabilityConfig): boolean {
+  return rules.timeZone === "Europe/Paris" && Number.isFinite(now.getTime()) &&
+    [rules.slotIntervalMinutes, rules.minimumLeadMinutes, rules.closingPreparationMinutes].every(Number.isInteger) &&
+    rules.slotIntervalMinutes > 0 && rules.minimumLeadMinutes >= 0 && rules.closingPreparationMinutes >= 0;
+}
+
+export function getTodayPickupState(
+  now: Date,
+  rules: PickupAvailabilityConfig = pickupAvailabilityConfig,
+  schedule: readonly TruckStop[] = truckSchedule,
+): TodayPickupState {
+  if (!validRules(now, rules)) return { date: "", dateLabel: "", status: "unavailable", service: null, nextService: null };
+  const date = parisDateKey(now);
+  const dateLabel = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: rules.timeZone }).format(now);
+  const service = createServiceForDate(date, now, rules, schedule);
+  const status = !service ? "closed" : now.getTime() >= Date.parse(service.closesAt) ? "finished" : service.slots.length ? "available" : "unavailable";
+  let nextService: TodayPickupState["nextService"] = null;
+  if (status !== "available") {
+    // Recherche informative uniquement ; elle n'élargit jamais les dates autorisées.
+    for (let offset = 1; offset <= 14; offset++) {
+      const next = createServiceForDate(addCalendarDays(date, offset), now, rules, schedule);
+      if (!next?.slots.length) continue;
+      nextService = { dateLabel: next.dateLabel, village: next.village, hours: next.hours };
+      break;
+    }
+  }
+  return { date, dateLabel, status, service, nextService };
+}
+
+/** Le tunnel ne transfère jamais une préparation déjà ouverte vers une nouvelle journée. */
+export function getCheckoutPickupState(now: Date, openedDate: string) {
+  const state = getTodayPickupState(now);
+  const dateChanged = state.date !== openedDate;
+  return { ...state, dateChanged, canChooseSlot: !dateChanged && state.status === "available" };
+}
+
+/** API de compatibilité : zéro ou un service, strictement celui d'aujourd'hui. */
 export function getPickupServices(
   now: Date,
   rules: PickupAvailabilityConfig = pickupAvailabilityConfig,
   schedule: readonly TruckStop[] = truckSchedule,
 ): PickupService[] {
-  // Le fuseau du métier reste explicitement Paris ; une configuration incohérente ne produit aucun créneau.
-  if (
-    rules.timeZone !== "Europe/Paris" || !Number.isFinite(now.getTime()) ||
-    ![rules.preorderDays, rules.slotIntervalMinutes, rules.minimumLeadMinutes, rules.closingPreparationMinutes].every(Number.isInteger) ||
-    rules.preorderDays < 1 || rules.preorderDays > 60 || rules.slotIntervalMinutes < 1 ||
-    rules.minimumLeadMinutes < 0 || rules.closingPreparationMinutes < 0
-  ) return [];
-  const services: PickupService[] = [];
-  const today = parisDateKey(now);
-  for (let dayOffset = 0; dayOffset < rules.preorderDays; dayOffset++) {
-    const date = addCalendarDays(today, dayOffset);
-    if (rules.exceptionalClosures.includes(date)) continue;
-    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
-    const stop = schedule.find((item) => item.day === weekday);
-    if (!stop || stop.status === "closed" || !stop.village || !stop.opens || !stop.closes) continue;
-    const serviceId = `forno-${date}-${weekday}`;
-    if (rules.unavailableServiceIds.includes(serviceId)) continue;
-    const open = parisLocalToInstant(date, stop.opens);
-    const close = parisLocalToInstant(date, stop.closes);
-    if (!open || !close || open >= close) continue;
-    const lastPickup = minutes(stop.closes) - rules.closingPreparationMinutes;
-    const earliest = now.getTime() + rules.minimumLeadMinutes * 60_000;
-    const slots: PickupSlot[] = [];
-    for (let value = minutes(stop.opens); value <= lastPickup; value += rules.slotIntervalMinutes) {
-      const time = clock(value);
-      const pickup = parisLocalToInstant(date, time);
-      const id = `${serviceId}@${time}`;
-      if (!pickup || pickup.getTime() < earliest || rules.unavailableSlotIds.includes(id)) continue;
-      slots.push({ id, serviceId, label: time.replace(":", "h"), pickupAt: pickup.toISOString() });
-    }
-    if (!slots.length) continue;
-    services.push({
-      id: serviceId, date,
-      dateLabel: new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: rules.timeZone }).format(new Date(`${date}T12:00:00Z`)),
-      village: stop.village,
-      address: stop.address && isConfiguredLinkValue(stop.address) ? stop.address : null,
-      opensAt: open.toISOString(), closesAt: close.toISOString(),
-      hours: stop.hours ?? `${stop.opens.replace(":", "h")} – ${stop.closes.replace(":", "h")}`,
-      slots, availability: "provisional",
-    });
-  }
-  return services;
-}
-
-export function findPickup(services: readonly PickupService[], serviceId: string, slotId: string): { service: PickupService; slot: PickupSlot } | null {
-  const service = services.find((item) => item.id === serviceId);
-  const slot = service?.slots.find((item) => item.id === slotId);
-  return service && slot ? { service, slot } : null;
+  const state = getTodayPickupState(now, rules, schedule);
+  return state.status === "available" && state.service ? [state.service] : [];
 }

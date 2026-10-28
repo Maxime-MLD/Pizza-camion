@@ -1,6 +1,5 @@
 export interface PickupAvailabilityConfig {
   timeZone: string;
-  preorderDays: number;
   slotIntervalMinutes: number;
   minimumLeadMinutes: number;
   /** Aucun retrait dans cette marge avant la fermeture (préparation / fin de service). */
@@ -12,7 +11,6 @@ export interface PickupAvailabilityConfig {
 
 export const pickupAvailabilityConfig: PickupAvailabilityConfig = {
   timeZone: "Europe/Paris",
-  preorderDays: 7,
   slotIntervalMinutes: 15,
   minimumLeadMinutes: 30,
   closingPreparationMinutes: 15,
@@ -26,7 +24,7 @@ export const checkoutConfig = {
   pageTitle: "Préparer ma commande",
   title: "PRÉPARER MA COMMANDE.",
   eyebrow: "VOS PIZZAS, À EMPORTER",
-  description: "Choisissez votre retrait, renseignez vos coordonnées, puis vérifiez votre demande.",
+  description: "Choisissez votre heure de retrait au camion aujourd’hui, renseignez vos coordonnées, puis vérifiez votre demande.",
   provisionalNotice: "Parcours de démonstration : planning et créneaux provisoires, non garantis par un serveur. Aucune demande ne sera transmise.",
   progressLabel: "Étapes de préparation de la commande",
   steps: ["Retrait", "Coordonnées", "Vérification"],
@@ -49,15 +47,23 @@ export const checkoutConfig = {
   storageUnavailable: "La conservation du panier est bloquée par votre navigateur. Il peut être perdu au changement de page.",
   pickup: {
     title: "QUAND PASSER AU CAMION ?",
-    description: "Le village dépend de la date choisie : votre lieu de retrait est fixé automatiquement.",
-    datesLabel: "Choisissez votre date de retrait",
+    description: "Le retrait se fait uniquement dans le village du jour. La date et le lieu sont fixés automatiquement ; seule l’heure est à choisir.",
+    todayLabel: "SERVICE DU JOUR · LIEU DE RETRAIT FIXÉ",
+    addressLabel: "Emplacement",
+    hoursLabel: "Horaires du service",
     slotLabel: "Heure de retrait souhaitée",
     selectSlot: "Sélectionnez une heure",
-    selectDateFirst: "Choisissez d’abord une date",
-    noServices: "Aucun créneau provisoire n’est disponible dans la fenêtre de précommande. Consultez le planning et revenez plus tard.",
+    unavailableSlot: "Aucun créneau disponible aujourd’hui",
+    closed: "Le camion ne propose pas de service aujourd’hui. Aucune commande ne peut être préparée pour un autre jour depuis ce tunnel.",
+    finished: "Le service du jour est terminé. Il n’est plus possible de préparer une commande pour aujourd’hui.",
+    noSlots: "Aucun créneau de retrait n’est encore disponible aujourd’hui, compte tenu du délai de préparation et des indisponibilités.",
+    dateChanged: "La journée a changé en heure de Paris. Votre ancien créneau a été retiré. Actualisez le service du jour pour recommencer ; votre panier est conservé.",
+    nextService: (village: string, date: string, hours: string) => `Prochain passage prévu : ${village}, ${date} · ${hours}. À titre informatif uniquement.`,
+    planningLabel: "VOIR LE PLANNING",
+    planningHref: "/#village-marquee-title",
+    reloadLabel: "ACTUALISER LE SERVICE DU JOUR",
     timeHelp: (minutes: number) => `Horaires en heure de Paris. Un délai minimum de ${minutes} minutes est prévu avant le retrait.`,
     addressPending: "Emplacement exact à confirmer.",
-    locationLabel: "Retrait à",
   },
   details: {
     title: "COMMENT VOUS JOINDRE ?",
@@ -86,8 +92,8 @@ export const checkoutConfig = {
     noComment: "Aucun commentaire.",
   },
   errors: {
-    pickup: "Choisissez une date et une heure de retrait disponibles dans la liste provisoire.",
-    expired: "Ce créneau n’est plus disponible. Choisissez une nouvelle date ou une nouvelle heure de retrait.",
+    pickup: "Choisissez une heure de retrait disponible pour le service d’aujourd’hui.",
+    expired: "Ce créneau n’est plus disponible. Vérifiez le service du jour et choisissez une autre heure si elle est proposée.",
     details: "Vérifiez les champs signalés pour continuer.",
     firstName: "Renseignez un prénom de 1 à 80 caractères.",
     lastName: "Renseignez un nom de 1 à 80 caractères.",

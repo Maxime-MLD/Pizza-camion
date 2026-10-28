@@ -1,20 +1,21 @@
 import { checkoutConfig as copy } from "../config/checkout.config";
 import { cartStore } from "../stores/cartStore";
-import { findPickup, getPickupServices } from "../utils/pickupAvailability";
+import { getCheckoutPickupState, parisDateKey } from "../utils/pickupAvailability";
+import { validateTodayPickupRequest } from "../utils/validateTodayPickup";
 import { formatEuros, getCartCount, getCartLines, getCartTotalCents } from "../utils/pizzaCart";
 import { validateCustomer } from "../utils/orderValidation";
-import type { CustomerDetails, PickupService } from "../types/order";
+import type { CustomerDetails } from "../types/order";
 
 function initializeCheckout(root: HTMLElement): void {
   const query = <T extends HTMLElement = HTMLElement>(selector: string): T => root.querySelector<T>(selector)!;
   const content = query("[data-checkout-content]");
   const empty = query("[data-checkout-empty]");
-  const dates = query("[data-pickup-dates]");
   const slots = query<HTMLSelectElement>("[data-pickup-slot]");
   const form = query<HTMLFormElement>("[data-details-form]");
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-checkout-step]"));
   let activeStep = 1;
-  let services: PickupService[] = [];
+  const openedDate = parisDateKey(new Date());
+  let pickupState = getCheckoutPickupState(new Date(), openedDate);
   let availabilitySignature = "";
   let serviceId = "";
   let slotId = "";
@@ -45,65 +46,52 @@ function initializeCheckout(root: HTMLElement): void {
     if (focus) panels.find((panel) => !panel.hidden)?.querySelector<HTMLElement>("h2")?.focus();
   }
   function renderSlots(): void {
-    const service = services.find((item) => item.id === serviceId);
-    slots.replaceChildren(new Option(service ? copy.pickup.selectSlot : copy.pickup.selectDateFirst, ""));
+    const service = pickupState.canChooseSlot ? pickupState.service : null;
+    slots.replaceChildren(new Option(service ? copy.pickup.selectSlot : copy.pickup.unavailableSlot, ""));
     slots.disabled = !service;
     service?.slots.forEach((slot) => slots.add(new Option(slot.label, slot.id)));
     slots.value = slotId;
-    const location = query("[data-pickup-location]");
-    location.hidden = !service;
-    location.textContent = service ? `${copy.pickup.locationLabel} ${service.village} · ${service.address ?? copy.pickup.addressPending}` : "";
+    query("[data-pickup-slot-field]").hidden = !service;
+    query<HTMLButtonElement>("[data-pickup-next]").disabled = !service || !slotId;
   }
   function refreshAvailability(): void {
-    services = getPickupServices(new Date());
-    const signature = JSON.stringify(services.map((service) => [service.id, service.slots.map((slot) => slot.id)]));
+    const now = new Date();
+    pickupState = getCheckoutPickupState(now, openedDate);
+    const signature = JSON.stringify(pickupState);
     if (signature === availabilitySignature) return;
     availabilitySignature = signature;
     const wasSelected = !!slotId;
-    const valid = findPickup(services, serviceId, slotId);
-    if (!services.some((service) => service.id === serviceId)) serviceId = "";
+    const valid = pickupState.canChooseSlot && validateTodayPickupRequest({ serviceId, slotId }, now).ok;
+    serviceId = pickupState.canChooseSlot ? pickupState.service!.id : "";
     if (!valid) slotId = "";
-    dates.replaceChildren();
-    for (const service of services) {
-      const label = document.createElement("label");
-      label.className = "flex min-h-24 cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border-strong)] p-4 has-[:checked]:border-[var(--color-primary-dark)] has-[:checked]:bg-[var(--color-primary-light)]";
-      const radio = document.createElement("input");
-      radio.type = "radio";
-      radio.name = "pickupService";
-      radio.value = service.id;
-      radio.checked = service.id === serviceId;
-      radio.className = "focus-ring mt-1 size-5 shrink-0 accent-[var(--color-primary-dark)]";
-      radio.setAttribute("aria-describedby", "pickup-error");
-      const details = document.createElement("span");
-      const date = document.createElement("span");
-      date.className = "block text-sm font-semibold capitalize";
-      date.textContent = service.dateLabel;
-      const village = document.createElement("span");
-      village.className = "mt-1 block font-display text-2xl leading-none font-extrabold uppercase";
-      village.textContent = service.village;
-      const hours = document.createElement("span");
-      hours.className = "mt-2 block text-xs text-[var(--color-muted-foreground)]";
-      hours.textContent = service.hours;
-      details.append(date, village, hours);
-      label.append(radio, details);
-      dates.append(label);
-    }
-    query("[data-no-services]").hidden = services.length > 0;
-    query<HTMLButtonElement>("[data-pickup-next]").disabled = services.length === 0;
+    query("[data-pickup-date]").textContent = pickupState.dateLabel;
+    const service = pickupState.service;
+    query("[data-today-service]").hidden = !service;
+    query("[data-pickup-village]").textContent = service?.village ?? "";
+    query("[data-pickup-address]").textContent = service?.address ?? copy.pickup.addressPending;
+    query("[data-pickup-hours]").textContent = service?.hours ?? "";
+    query("[data-pickup-closed]").hidden = pickupState.canChooseSlot;
+    query("[data-pickup-closed-message]").textContent = pickupState.dateChanged ? copy.pickup.dateChanged : pickupState.status === "closed" ? copy.pickup.closed : pickupState.status === "finished" ? copy.pickup.finished : copy.pickup.noSlots;
+    const next = pickupState.nextService;
+    query("[data-pickup-next-service]").hidden = !next;
+    query("[data-pickup-next-service]").textContent = next ? copy.pickup.nextService(next.village, next.dateLabel, next.hours) : "";
+    query("[data-pickup-reload]").hidden = !pickupState.dateChanged;
     renderSlots();
-    if (wasSelected && !valid) {
+    if ((wasSelected || activeStep > 1) && !valid) {
       goToStep(1, getCartCount(cart) > 0);
-      globalError(copy.errors.expired);
-      pickupError(copy.errors.expired);
+      const message = pickupState.dateChanged ? copy.pickup.dateChanged : copy.errors.expired;
+      globalError(message);
+      pickupError(message);
     }
   }
   function validatePickup(): boolean {
     refreshAvailability();
-    if (findPickup(services, serviceId, slotId)) return true;
+    if (pickupState.canChooseSlot && validateTodayPickupRequest({ serviceId, slotId }, new Date()).ok) return true;
     if (activeStep !== 1) goToStep(1);
-    globalError(copy.errors.pickup);
-    pickupError(copy.errors.pickup);
-    (serviceId ? slots : dates.querySelector<HTMLInputElement>("input"))?.focus();
+    const message = pickupState.dateChanged ? copy.pickup.dateChanged : copy.errors.pickup;
+    globalError(message);
+    pickupError(message);
+    if (!slots.disabled) slots.focus();
     return false;
   }
   function readCustomer(): CustomerDetails {
@@ -114,8 +102,8 @@ function initializeCheckout(root: HTMLElement): void {
     };
   }
   function renderReview(): void {
-    const pickup = findPickup(services, serviceId, slotId);
-    if (!pickup || !customer) return;
+    const pickup = validateTodayPickupRequest({ serviceId, slotId }, new Date());
+    if (!pickup.ok || !customer) return;
     const review = {
       date: pickup.service.dateLabel, village: pickup.service.village,
       address: pickup.service.address ?? copy.pickup.addressPending,
@@ -150,15 +138,13 @@ function initializeCheckout(root: HTMLElement): void {
     query("[data-checkout-storage]").hidden = cartStore.isPersistent();
   }
 
-  dates.addEventListener("change", (event) => {
-    if (!(event.target instanceof HTMLInputElement) || event.target.name !== "pickupService") return;
-    serviceId = event.target.value;
-    slotId = "";
+  slots.addEventListener("change", () => {
+    slotId = slots.value;
     pickupError();
     globalError();
-    renderSlots();
+    query<HTMLButtonElement>("[data-pickup-next]").disabled = !pickupState.canChooseSlot || !slotId;
   });
-  slots.addEventListener("change", () => { slotId = slots.value; pickupError(); globalError(); });
+  query("[data-pickup-reload]").addEventListener("click", () => window.location.reload());
   query("[data-pickup-next]").addEventListener("click", () => { if (validatePickup()) goToStep(2); });
   root.querySelectorAll<HTMLElement>("[data-checkout-back]").forEach((button) => {
     button.addEventListener("click", () => { refreshAvailability(); goToStep(Math.max(1, activeStep - 1)); });
