@@ -14,6 +14,8 @@ before(async()=>{
  // Test-only clock substitution; production SQL always uses the actual PostgreSQL clock.
  const sql=(await readFile('supabase/migrations/202610280001_orders.sql','utf8')).replace(/\b(?:clock_timestamp|now)\(\)/g,'public.forno_test_now()');
  await db.exec(sql);await db.exec(await readFile('supabase/migrations/202610280002_catalogue.sql','utf8'));
+ const hardening=(await readFile('supabase/migrations/20261028095508_harden_forno_data_api.sql','utf8')).replace(/\b(?:clock_timestamp|now)\(\)/g,'public.forno_test_now()');
+ await db.exec(hardening);
  await db.exec("insert into public.services(id,service_date,village,opening_time,closing_time,status,orders_enabled) values ('forno-2026-10-27-2','2026-10-27','Vougy','18:00','21:30','open',true); insert into public.pickup_slots values ('forno-2026-10-27-2@18:00','forno-2026-10-27-2','18:00',3,true);");
 });
 after(()=>db.close());
@@ -135,3 +137,17 @@ test('Actualisation : seule la clé de tentative et les quantités sont conserv�
  await callOrder(value,await requestDigest(value));
  const receipt=(await db.query<{receipt:{orderNumber:string}}>('select public.forno_recover_order($1) receipt',[value.idempotencyKey])).rows[0]!.receipt;assert.match(receipt.orderNumber,/^F-/);
 }));
+
+test('Durcissement : service_role utilise uniquement les RPC et ne peut pas lire les tables ou purger',()=>transaction(async()=>{
+ await db.exec('set local role service_role');
+ const receipt=await callOrder();assert.equal(receipt.village,'Vougy');
+ const canRead=(await db.query<{allowed:boolean}>("select has_table_privilege('service_role','public.orders','SELECT') as allowed")).rows[0]!.allowed;
+ assert.equal(canRead,false);
+ const canPurge=(await db.query<{allowed:boolean}>("select has_function_privilege('service_role','public.forno_maintenance()','EXECUTE') as allowed")).rows[0]!.allowed;
+ assert.equal(canPurge,false);
+}));
+test('Durcissement : les valeurs NULL ne contournent pas les validations SQL',async()=>{
+ for(const patch of [{customer:{...base().customer,firstName:null}},{customer:{...base().customer,phone:null}},{customer:{...base().customer,privacyAcknowledged:'true'}},{idempotencyKey:null}]){
+  await transaction(async()=>{await assert.rejects(callOrder({...base(),...patch} as unknown as ReturnType<typeof base>),/INVALID_REQUEST/);});
+ }
+});

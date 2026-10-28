@@ -32,3 +32,6 @@ coverage/
 .wrangler/
 .dev.vars
 .dev.vars.*
+
+# Supabase CLI local project/cache state
+supabase/.temp/
