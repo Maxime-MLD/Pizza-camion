@@ -14,6 +14,8 @@ if(root){
  const connection=root.querySelector<HTMLElement>('[data-connection]')!;
  const message=root.querySelector<HTMLElement>('[data-message]')!;
  const view=root.dataset.adminView!;
+ const confirmation=root.querySelector<HTMLDialogElement>('[data-confirm-dialog]')!;
+ let pendingConfirmation:Record<string,unknown>|null=null;let confirmationTrigger:HTMLButtonElement|null=null;
  const csrf=document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')!.content;
  let data:Record<string,unknown>|null=null;let busy=false;let reading=false;let online=false;let snapshot='';let timer:ReturnType<typeof setTimeout>|undefined;
  let known:Set<string>|null=null;let audio:AudioContext|undefined;
@@ -80,7 +82,13 @@ if(root){
   }catch(error){const code=error instanceof Error?error.message:'UNAVAILABLE';notify(cfg.errors[code as keyof typeof cfg.errors]??cfg.errors.UNAVAILABLE);}
   finally{busy=false;await read(true);}
  }
- root.addEventListener('click',event=>{const target=(event.target as Element).closest<HTMLButtonElement>('button[data-change]');if(!target||target.disabled)return;if(target.dataset.confirm&&!confirm(target.dataset.confirm))return;void change(JSON.parse(target.dataset.change!));});
+ root.addEventListener('click',event=>{
+  const target=(event.target as Element).closest<HTMLButtonElement>('button[data-change]');if(!target||target.disabled)return;
+  const input=JSON.parse(target.dataset.change!) as Record<string,unknown>;
+  if(target.dataset.confirm){pendingConfirmation=input;confirmationTrigger=target;confirmation.querySelector('[data-confirm-copy]')!.textContent=target.dataset.confirm;confirmation.returnValue='cancel';confirmation.showModal();return;}
+  void change(input);
+ });
+ confirmation.addEventListener('close',()=>{const input=pendingConfirmation;pendingConfirmation=null;if(confirmationTrigger?.isConnected)confirmationTrigger.focus();else root!.querySelector<HTMLButtonElement>('[data-refresh]')!.focus();confirmationTrigger=null;if(confirmation.returnValue==='confirm'&&input)void change(input);});
  root.addEventListener('submit',event=>{const form=(event.target as Element).closest<HTMLFormElement>('form[data-edit]');if(!form)return;event.preventDefault();const value:Record<string,unknown>=JSON.parse(form.dataset.edit!);for(const [key,entry] of new FormData(form))value[key]=['capacity','minimumLeadMinutes','defaultSlotCapacity','slotIntervalMinutes'].includes(key)?Number(entry):entry;void change(value);});
  root.querySelector('[data-refresh]')!.addEventListener('click',()=>void read(true));
  root.querySelector('[data-history]')?.addEventListener('change',render);
