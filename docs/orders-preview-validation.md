@@ -1,4 +1,43 @@
-# Environnement FORNO Test — 28 octobre 2026
+# Environnement FORNO Test — validation actualisée le 29 octobre 2026
+
+## Résultat actuel : parcours Preview complet réussi
+
+La dernière clé Test enregistrée par l’utilisateur est acceptée. Le problème historique `401 / bad_checksum` décrit plus bas est résolu. Aucune valeur secrète n’a été affichée ou déchiffrée.
+
+Déploiement réellement testé : `dpl_5DLGqBXUj4sCtFVGZ33Azfin6CBC`, https://pizza-bs4sckax6-maxime-mlds-projects.vercel.app, branche `codex/test-commandes`, commit `4c51c52`, cible Preview (`target=null`), protection Vercel conservée. L’API utilise exclusivement Supabase Test `brzcvncsycdpsrvulqss`. Le service synthétique du 29 octobre et ses créneaux sont distincts du planning Production.
+
+| Vérification réellement exécutée | Portée | Résultat |
+| --- | --- | --- |
+| Tests automatisés et compilation | Local | 47 tests réussis (14 checkout, 33 commandes/SQL/fixtures), 3 scénarios réseau Cloudflare, TypeScript sans erreur et build Astro/Vercel réussi ; fonction compilée vérifiée sur le commit testé |
+| Lecture des créneaux | HTTP Preview → Supabase Test | 200 ; date Europe/Paris du 29 octobre, seul « Village de test », préparation 30 min, créneau passé et désactivé indisponibles ; aucun basculement vers demain |
+| Parcours complet navigateur | Navigateur → Vercel → Siteverify officiel de test → Supabase Test | Une Capri et une Maestro, retrait 11:00 : **F-00000007**, **2100 centimes**, **pending / En attente de confirmation**, panier revenu à 0 pizza et 0 € |
+| Prix et lignes persistés | SQL Test en lecture seule | Deux lignes : Capri 1000 × 1, Maestro 1100 × 1 ; total 2100, pizza_count 2, statut pending |
+| Nouvelle commande HTTP | Preview | 201, **F-00000008**, deux Capri, total recalculé 2000 centimes |
+| Doubles soumissions et reprise | Preview + SQL Test | Deux répétitions (jeton identique puis jeton de test renouvelé) retournent la même référence F-00000008 ; reprise GET 200 sans coordonnées ; exactement une commande pour cette clé |
+| Conflit d’idempotence | Preview | Quantité modifiée avec la même clé : 409 IDEMPOTENCY_CONFLICT |
+| Dernière capacité, deux POST simultanés | Preview + SQL Test | Appels démarrés à 400 ms d’intervalle et terminés vers 1051/1054 ms : un 201 **F-00000009**, un 409 SLOT_FULL ; une seule commande de deux pizzas pour capacité deux. La preuve de verrou PostgreSQL sur deux connexions indépendantes du 28 octobre reste documentée plus bas |
+| Manipulations et entrées invalides | Preview | Prix ajouté et quantité négative : 400 INVALID_REQUEST ; village et date différents : 409 WRONG_SERVICE ; créneau passé : 409 SLOT_EXPIRED ; désactivé : 409 SLOT_UNAVAILABLE ; jeton absent : 400 INVALID_REQUEST |
+| Expiration et capacité | Preview + SQL Test | **F-00000010** synthétique sur créneau capacité deux ; seule son échéance est vieillie dans Test, puis API : créneau de nouveau disponible avant maintenance ; forno_maintenance() : statut cancelled |
+| Service désactivé | Preview | Service Test remis orders_enabled=false : API ne propose plus de créneaux disponibles, POST 409 SERVICE_CLOSED |
+| Responsive du reçu | Navigateur Preview | Desktop 1280 px et mobile 390 px ; scrollWidth égal à clientWidth, confirmation lisible, aucune régression de section introduite |
+| Production finale | HTTP + SQL en lecture seule | /api/pickup-slots : 503 ORDERS_DISABLED ; 13 pizzas, 30 services, 440 créneaux, **0 commande**, **0 service activé**, cron en pause |
+
+Dix commandes synthétiques au total sont conservées dans Test : les six preuves SQL historiques et quatre nouvelles commandes via Vercel. Au contrôle de 10:04 heure de Paris : 3 pending, 1 accepted et 6 cancelled. Ces statuts évoluent avec l’expiration ; aucune commande supprimée. Les données utilisées sont fictives, aucune donnée personnelle Production copiée.
+
+La maintenance Test a été appelée à nouveau après vieillissement ciblé de la seule commande F-00000010. Le fonctionnement réel pg_cron, l’anonymisation à 30 jours et la suppression d’un ancien compteur synthétique avaient déjà été vérifiés le 28 octobre. Les deux jobs Test et le job Production restent en pause. Le délai de conservation technique de 30 jours doit être approuvé avant activation Production.
+
+## État de fermeture et limites avant ouverture
+
+Le service Test est refermé après les essais. Le verrou FORNO_ORDERS_ENABLED est remis à false **uniquement en Preview sur codex/test-commandes** pour les prochains déploiements. Le client de vérification et son accès temporaire sont retirés en fin de contrôle. Aucune promotion en Production, aucune modification des clés, données ou services Production.
+
+Le widget de démonstration a automatiquement fourni un jeton dans le navigateur et le serveur a réellement appelé Siteverify. Les clés officielles de test ne prouvent pas la protection anti-bot réelle, l’autorisation du domaine Production, ni l’expiration/réutilisation d’un vrai jeton. Un widget réel autorisé sur un domaine de test doit encore être validé, puis les paramètres opérationnels, les tarifs à confirmer, la confidentialité/rétention et l’autorisation explicite d’ouverture. **Le système n’est pas déclaré prêt à ouvrir les commandes publiques.**
+
+Aucune nouvelle correction du code métier n’a été nécessaire après l’enregistrement de la clé valide. Le fichier modifié lors de cette validation finale est ce rapport ; les corrections et tests précédents sont déjà sur la branche de test.
+
+## Historique des diagnostics précédents (résolus)
+
+Les paragraphes suivants conservent les étapes antérieures ; leurs mentions d’absence de clé ou de parcours non exécuté décrivent l’état à ces dates et ne remplacent pas les résultats actuels ci-dessus.
+
 
 ## État actualisé le 29 octobre — clé Preview enregistrée, valeur rejetée
 
