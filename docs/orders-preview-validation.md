@@ -1,5 +1,19 @@
 # Environnement FORNO Test — 28 octobre 2026
 
+## État actualisé le 29 octobre — clé Preview enregistrée, valeur rejetée
+
+La présence de `SUPABASE_SECRET_KEY` en Preview est désormais confirmée dans l'interface et l'API Vercel, uniquement sur `codex/test-commandes`. Le formulaire d'ajout ciblait Production par défaut et signalait un doublon ; la nouvelle entrée a été enregistrée après retrait de Production et sélection de la branche. La valeur masquée saisie par l'utilisateur n'a jamais été affichée ou déchiffrée.
+
+Après reconstruction, le Preview `dpl_9odXNoe9ADEYDQyXFNUMC28RDYGp` (https://pizza-bs4s2h0l6-maxime-mlds-projects.vercel.app, commit `0b307ca`, target Preview) atteint réellement la passerelle Supabase Test. La lecture des créneaux retourne 503 DATABASE_UNAVAILABLE. Les logs Supabase Test limités au chemin RPC et aux codes d'erreur confirment **HTTP 401, UNAUTHORIZED_INVALID_API_KEY, bad_checksum**, sur `/rest/v1/rpc/forno_rate_limit`. Une seconde valeur enregistrée puis redéployée a produit le même refus. Les permissions SQL de service_role sur la RPC et le schéma public sont présentes : elles ne corrigent pas une clé refusée par la passerelle.
+
+Le blocage d'absence de variable décrit dans les sections historiques ci-dessous est donc résolu. Le prérequis restant est une **valeur Secret valide du projet forno-pizza-test**, copiée intégralement avec le bouton de copie du fournisseur. L'édition inline de la seule entrée Preview est préparée dans Vercel. La rotation groupée Production & Preview a été fermée sans validation pour préserver Production. L'onglet source Supabase Test affiche une connexion à effectuer par l'utilisateur ; aucun identifiant demandé dans le chat.
+
+Les fixtures de test ont été rendues compatibles avec un nouveau jour, sans effacer les preuves ni les commandes historiques. Un test PGlite dédié vérifie la conservation des lignes historiques et le refus des doublons du jour. Cette préparation a été appliquée **uniquement à Supabase Test**, le 29 octobre : service synthétique du jour et créneaux à partir de 11:00 ; les six commandes précédentes sont conservées. Aucune commande supplémentaire n'a été créée par les appels API refusés.
+
+Validation locale actualisée : **14 tests checkout + 33 tests commandes/SQL/fixtures = 47 réussis**, trois scénarios réseau Cloudflare réussis, TypeScript (123 fichiers) sans erreur/avertissement/hint, build Astro/Vercel réussi et vérification de la fonction compilée réussie. Le checkout utilisateur revenu sur main a été préservé ; ces travaux utilisent le worktree géré `forno-preview-validation` sur la branche de test. Aucune modification du code exécuté en Production.
+
+En attendant la connexion de l'utilisateur à la source Supabase, le verrou Preview est remis à false pour les déploiements suivants, le client HTTP privé arrêté et son accès temporaire révoqué. L'édition de la seule variable Preview reste ouverte pour la correction par l'utilisateur ; aucune rotation groupée ni modification de la clé Production validée.
+
 ## Reprise du 29 octobre — configuration toujours bloquante
 
 Le Preview a été reconstruit depuis le commit `439e1ea` sur la branche de test : déploiement `dpl_Cf6Bvxgtmss51rYtbhMPUSz5VX4p`, cible Preview (`target=null`), URL `https://pizza-2n0ri1ymd-maxime-mlds-projects.vercel.app`. Avec le verrou Preview temporairement activé, une lecture HTTP réellement authentifiée de `/api/pickup-slots` retourne **503 NOT_CONFIGURED**. Aucune commande envoyée ni donnée Test modifiée pendant cette reprise.
