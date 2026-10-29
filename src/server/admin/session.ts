@@ -26,7 +26,8 @@ export async function validateAccess(env:AdminEnvironment,token:string,transport
  if(!response.ok)throw new AdminError(response.status>=500?'UNAVAILABLE':'UNAUTHORIZED',response.status>=500?503:401);
  const user=await response.json() as {id:string;email?:string};
  const identity={userId:user.id,email:user.email??'',sessionId:verifiedSessionId(token,user.id)};
- await adminRpc(env,'forno_admin_session',{p_actor:identity.userId,p_session:identity.sessionId},transport);
+ const allowed=await adminRpc<boolean>(env,'forno_admin_session',{p_actor:identity.userId,p_session:identity.sessionId},transport);
+ if(allowed!==true)throw new AdminError('ADMIN_FORBIDDEN',403);
  return identity;
 }
 export async function getIdentity(env:AdminEnvironment,cookies:AstroCookies,transport:typeof fetch=fetch):Promise<AdminIdentity>{

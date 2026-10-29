@@ -4,7 +4,7 @@ import {adminConfig} from '../../config/admin.config';
 import {csrfToken} from '../../server/admin/session';
 export const prerender=false;
 const error=Astro.url.searchParams.get('error');
-const message=error==='RATE_LIMITED'?adminConfig.errors.RATE_LIMITED:error?adminConfig.errors.LOGIN_FAILED:Astro.url.searchParams.has('session')?adminConfig.errors.UNAUTHORIZED:null;
+const message=error==='RATE_LIMITED'?adminConfig.errors.RATE_LIMITED:error==='CSRF'?adminConfig.errors.CSRF:error==='UNAVAILABLE'?adminConfig.errors.UNAVAILABLE:error?adminConfig.errors.LOGIN_FAILED:Astro.url.searchParams.has('session')?adminConfig.errors.UNAUTHORIZED:null;
 ---
 <AdminLayout title="Connexion" login>
  <section class="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-surface p-6 sm:mt-12 sm:p-8" aria-labelledby="login-title">

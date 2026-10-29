@@ -65,7 +65,7 @@ export const ALL:APIRoute=async(context)=>{
   if(action==='login'){
    // Enumerated code/stage only: never log body, credentials, tokens, email or transport errors.
    console.warn('FORNO_ADMIN_LOGIN_FAILURE',stage,e.code);
-   clearSession(cookies);return context.redirect(`/admin/login/?error=${e.code==='RATE_LIMITED'?'RATE_LIMITED':'LOGIN_FAILED'}`,303);}
+   clearSession(cookies);return context.redirect(`/admin/login/?error=${['RATE_LIMITED','CSRF','UNAVAILABLE'].includes(e.code)?e.code:'LOGIN_FAILED'}`,303);}
   return json({error:e.code},e.status);
  }
 };

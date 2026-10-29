@@ -49,7 +49,7 @@ Signal visuel pour une nouvelle demande ; son facultatif activé par un geste ex
 
 | Portée | Vérifications | Résultat |
 | --- | --- | --- |
-| Local | 24 tests admin + 14 checkout + 33 commandes existantes | 71 réussis |
+| Local | 25 tests admin + 14 checkout + 33 commandes existantes | 72 réussis |
 | Local | TypeScript, build Astro/Vercel, fonction compilée publique | Réussis, commandes publiques fermées |
 | Fonction Vercel compilée | Pages admin anonymes, API anonymes, cookies, cache privé, CSRF | Réussis avec tout accès réseau interdit dans ce test |
 | Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; INFO attendues pour tables privées sans politiques publiques. Après création du compte Auth, un WARN fournisseur apparaît pour la protection contre les mots de passe compromis, désactivée |
@@ -78,3 +78,7 @@ Le propriétaire a créé puis confirmé le compte Auth demandé. Son UUID a ét
 Le contrôle Supabase signale maintenant `auth_leaked_password_protection` (WARN). L’option de rejet des mots de passe connus comme compromis est désactivée ; elle est disponible sur le plan Pro et supérieur selon [la documentation Supabase](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Aucun changement de forfait ou action payante effectué. Ce point reste à décider avant Production.
 
 Trois demandes synthétiques de dashboard ont été préparées via la RPC métier dans Test : F-00000012 (acceptation), F-00000013 (refus), F-00000014 (expiration). Le service est refermé dans la même transaction avant commit et le verrou global reste fermé ; ces fixtures ne permettent aucune commande publique. Le numéro F-00000011 a été consommé par la séquence lors du test SQL annulé, sans commande persistante correspondante (comportement normal des séquences PostgreSQL).
+
+## Correction du premier essai de connexion
+
+Le premier formulaire était bloqué avant Supabase Auth par une incompatibilité entre `Referrer-Policy: no-referrer` et la vérification stricte Origin des formulaires natifs : un navigateur peut envoyer `Origin: null`. La politique est désormais `same-origin`, sans révéler les références aux sites tiers et sans accepter d’Origin nul. Le test de la fonction compilée vérifie cet en-tête et le passage du formulaire jusqu’à Auth. Après déploiement du commit 67fa18d, le test navigateur avec identifiants synthétiques a produit deux RPC de limitation 200 puis un vrai `/auth/v1/token` 400 dans Supabase Test. La tentative valide du propriétaire reste à reprendre. Les erreurs CSRF et les indisponibilités ont désormais des messages distincts des mauvais identifiants.
