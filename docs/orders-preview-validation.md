@@ -1,5 +1,17 @@
 # Environnement FORNO Test — 28 octobre 2026
 
+## Reprise du 29 octobre — configuration toujours bloquante
+
+Le Preview a été reconstruit depuis le commit `439e1ea` sur la branche de test : déploiement `dpl_Cf6Bvxgtmss51rYtbhMPUSz5VX4p`, cible Preview (`target=null`), URL `https://pizza-2n0ri1ymd-maxime-mlds-projects.vercel.app`. Avec le verrou Preview temporairement activé, une lecture HTTP réellement authentifiée de `/api/pickup-slots` retourne **503 NOT_CONFIGURED**. Aucune commande envoyée ni donnée Test modifiée pendant cette reprise.
+
+Les métadonnées lues sans déchiffrement pour le projet `pizza`, équipe `MLD projets`, branche `codex/test-commandes`, retournent les six variables de test configurées par l'agent mais toujours aucune `SUPABASE_SECRET_KEY` Preview. L'adresse publique fournie par l'utilisateur identifie correctement le site ; elle ne permet pas de vérifier où la variable a été enregistrée. Le parcours complet reste non validé. Aucun autre secret n'a été testé ou déclaré valide par ce résultat.
+
+Le verrou Preview a ensuite été remis à false dans sa configuration pour les déploiements suivants ; l'accès temporaire de vérification a été révoqué et le client arrêté. Le service Test du 29 octobre est resté scheduled, commandes désactivées ; les six commandes synthétiques précédentes sont conservées. Les tests existants du 28 octobre ne sont pas présentés comme rejoués le 29.
+
+Incident corrigé pendant la reconstruction : la cible API `preview` a été rejetée par Vercel. Une tentative utilisant `staging` a réassigné brièvement l'alias secondaire `pizza-maxime-mlds-projects.vercel.app`. Celui-ci a été rétabli immédiatement sur le déploiement Production d'origine `dpl_4NyhLNxBjJMVcG27kHyRu6AoECDe`, puis vérifié. Le domaine public `pizza-two-bay.vercel.app` est resté sur ce déploiement, avec 503 ORDERS_DISABLED. La reconstruction finale utilise une source Git explicitement épinglée à la branche de test et omet la cible API pour obtenir un vrai Preview. Aucun changement de base Production ni promotion de code.
+
+Action nécessaire : enregistrer la clé serveur de Supabase **forno-pizza-test** dans [Vercel / pizza / variables](https://vercel.com/maxime-mlds-projects/pizza/settings/environment-variables), portée **Preview**, branche **codex/test-commandes**, nom **SUPABASE_SECRET_KEY**, puis Save. La clé doit être copiée directement entre les interfaces Supabase Test et Vercel, jamais transmise dans le chat. La page exacte des variables a été demandée à l'ouverture dans le panneau navigateur.
+
 ## Isolation et déploiements
 
 Création approuvée par l'utilisateur après annonce du coût Supabase : **0 par mois** dans l'organisation MLD. Projet `forno-pizza-test`, ref `brzcvncsycdpsrvulqss`, région eu-west-1, PostgreSQL 17.11. Aucune donnée personnelle copiée de Production.
