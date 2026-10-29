@@ -1,6 +1,6 @@
 import {defineMiddleware} from 'astro:middleware';
 import {getAdminEnvironment,adminConfigured} from './server/admin/environment';
-import {getIdentity,clearSession} from './server/admin/session';
+import {getIdentity,clearSession,cookieNames} from './server/admin/session';
 import {AdminError} from './server/admin/client';
 export const onRequest=defineMiddleware(async(context,next)=>{
  const path=context.url.pathname.replace(/\/$/,'');
@@ -18,8 +18,9 @@ export const onRequest=defineMiddleware(async(context,next)=>{
  else if(path==='/admin/login'||path==='/api/admin/login'||path==='/api/admin/logout')response=await next();
  else try{context.locals.admin=await getIdentity(env,context.cookies);response=await next();}
  catch(error){const status=error instanceof AdminError?error.status:503;
+  const hadSession=!!context.cookies.get(cookieNames.refresh)||!!context.cookies.get(cookieNames.access);
   if(status===401||status===403)clearSession(context.cookies);
-  response=path.startsWith('/api/')?Response.json({error:status===403?'ADMIN_FORBIDDEN':status===401?'UNAUTHORIZED':'UNAVAILABLE'},{status}):status===401?context.redirect('/admin/login/?session=expired',303):new Response(status===403?'Ce compte n’est pas autorisé.':'Connexion au serveur indisponible.',{status});
+  response=path.startsWith('/api/')?Response.json({error:status===403?'ADMIN_FORBIDDEN':status===401?'UNAUTHORIZED':'UNAVAILABLE'},{status}):status===401?context.redirect(hadSession?'/admin/login/?session=expired':'/admin/login/',303):new Response(status===403?'Ce compte n’est pas autorisé.':'Connexion au serveur indisponible.',{status});
  }
  // Explicitly attach headers even to short-circuit responses.
  for(const [key,value] of headers)response.headers.set(key,value);

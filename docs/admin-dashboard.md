@@ -26,7 +26,7 @@ Toutes les mutations, connexion et déconnexion comprises, exigent Origin identi
 
 Le SQL vérifie à nouveau toutes les règles métier. Verrous service → créneau → commande, cohérents avec le checkout, puis vérification du statut attendu. Seules pending → accepted/rejected, accepted → preparing, preparing → ready, ready → completed sont autorisées. Pending expiré refusé. `completed` signifie remis/clôturé, jamais payé automatiquement. La maintenance existante ne touche que les pending expirés.
 
-Fermer le service bloque les nouvelles demandes et conserve les commandes existantes. Annuler est refusé si des demandes non expirées ou commandes en traitement subsistent. Horaires modifiables seulement pour un service futur sans aucune commande ; les anciens créneaux sont désactivés et conservés, les créneaux utiles réactivés/créés. Capacité future toujours supérieure ou égale aux réservations effectives. Changements de réglages versionnés ; capacité et intervalle n’écrasent aucun créneau existant. Le délai est protégé pendant les commandes en cours.
+Fermer le service bloque les nouvelles demandes et conserve les commandes existantes. Annuler est refusé si des demandes non expirées ou commandes en traitement subsistent. Horaires modifiables seulement pour un service futur sans aucune commande ; les anciens créneaux sont désactivés et conservés, les créneaux utiles réactivés/créés. Capacité future toujours supérieure ou égale aux réservations effectives. Changements de réglages versionnés ; capacité et intervalle n’écrasent aucun créneau existant. Le délai est protégé pendant les commandes en cours et lorsque des services autorisent encore les commandes.
 
 L’ouverture est interdite côté API hors du Preview Test exact et également verrouillée dans la RPC hors d’une base explicitement marquée Test. Le verrou général des commandes reste indépendant et fermé. Une future ouverture Production nécessitera une revue et une modification explicites de ces garde-fous.
 
@@ -45,11 +45,27 @@ Polling authentifié toutes les 8 secondes, sans canal Realtime public. Chaque r
 
 Signal visuel pour une nouvelle demande ; son facultatif activé par un geste explicite, dépendant du navigateur. Pas de notifications push ou de réception garantie lorsque l’application est en arrière-plan. Aucune de ces garanties n’est annoncée.
 
-## Tests
+## Résultats vérifiés le 29 octobre 2026
+
+| Portée | Vérifications | Résultat |
+| --- | --- | --- |
+| Local | 24 tests admin + 14 checkout + 33 commandes existantes | 71 réussis |
+| Local | TypeScript, build Astro/Vercel, fonction compilée publique | Réussis, commandes publiques fermées |
+| Fonction Vercel compilée | Pages admin anonymes, API anonymes, cookies, cache privé, CSRF | Réussis avec tout accès réseau interdit dans ce test |
+| Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; aucun WARN/ERROR, INFO attendues pour tables privées sans politiques publiques |
+| PostgreSQL Test réel | Autorisation/non-admin, cycle complet, conflit d’état, expiration, maintien de accepted après maintenance, 4 événements d’audit et révocation immédiate | Réussis dans une transaction intégralement annulée ; identités/session purement synthétiques non persistées, aucune connexion Auth simulée présentée comme réelle |
+| Preview réel | Accès /admin sans session, formulaire de connexion et identifiants synthétiques invalides | Redirection et refus vérifiés, aucune donnée client révélée |
+| Navigateur mobile | Formulaire de connexion à 390 px | Aucun débordement horizontal |
+| Preview authentifié | Connexion réelle du premier compte, vues privées et actions depuis le navigateur | En attente de création du compte Auth Test par son propriétaire ; ne pas déclarer ces scénarios réussis |
+| Concurrence admin réelle / réseau interrompu | Deux sessions administrateur, retour réseau et nouvelles commandes au polling | Restent à exécuter après connexion ; les tests locaux ne remplacent pas ces vérifications |
+
+La migration complémentaire `20261029092544_harden_admin_settings_concurrency.sql` rend la vérification d’expiration atomique au moment de l’UPDATE et verrouille les services avant les réglages. Le changement du délai de préparation exige aussi que les services aient leurs commandes fermées, pour éviter une course avec le checkout. Aucun changement de la RPC du checkout n’a été nécessaire.
+
+## Tests reproductibles
 
 `npm run test:admin` : tests Auth simulés et PostgreSQL PGlite, dont autorisation, cookies/CSRF, renouvellement, transitions, expiration, conflits d’état, capacité, fermeture, horaires, réglages, rétention, permissions et révocation. Ils ne constituent pas une preuve de concurrence entre deux connexions PostgreSQL ; les validations Preview réelles sont documentées séparément après exécution.
 
-Exécuter également `npm run check`, `npm run test:checkout`, `npm run test:orders` et `npm run build`.
+Vérifier la fonction compilée avec `node scripts/verify-admin-build.mjs`. Exécuter également `npm run check`, `npm run test:checkout`, `npm run test:orders` et `npm run build`.
 
 ## Avant Production
 

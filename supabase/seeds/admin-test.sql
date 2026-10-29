@@ -9,5 +9,6 @@ begin
  select id into actor from auth.users where lower(email)=lower('TODO_ADMIN_EMAIL') and email_confirmed_at is not null;
  if actor is null then raise exception 'CONFIRMED_AUTH_USER_REQUIRED'; end if;
  insert into forno_private.admin_users(user_id) values(actor) on conflict(user_id) do update set active=true;
+ insert into forno_private.admin_audit(actor_id,action,resource_id,changes) values(null,'admin_grant',actor::text,'{"active":true}');
 end $$;
 commit;

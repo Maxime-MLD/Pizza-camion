@@ -52,7 +52,7 @@ if(root){
   <form data-edit="${payload({action:'settings',revision:s.revision})}" class="${card} grid gap-5"><h2 class="text-xl font-bold">Paramètres métier</h2>${[
    ['minimumLeadMinutes','Délai minimum de préparation (minutes)',s.minimumLeadMinutes,0,240],['defaultSlotCapacity','Capacité des nouveaux créneaux (pizzas)',s.defaultSlotCapacity,1,200],['slotIntervalMinutes','Intervalle des nouveaux créneaux (minutes)',s.slotIntervalMinutes,5,60]
   ].map(([name,label,value,min,max])=>`<label class="grid gap-2 text-sm font-semibold">${label}<input class="${field}" type="number" name="${name}" value="${value}" min="${min}" max="${max}" required/></label>`).join('')}
-  <p class="text-sm text-muted-foreground">Capacité et intervalle servent aux futurs créneaux ; les services existants restent inchangés. Le délai ne peut pas être modifié pendant qu’une commande est en cours. Chaque changement est journalisé.</p><button class="${button}">Enregistrer les réglages</button></form>`;
+  <p class="text-sm text-muted-foreground">Capacité et intervalle servent aux futurs créneaux ; les services existants restent inchangés. Le délai ne peut pas être modifié pendant qu’une commande est en cours ou qu’un service autorise les commandes. Chaque changement est journalisé.</p><button class="${button}">Enregistrer les réglages</button></form>`;
  };
  function render(){if(!data)return;content.innerHTML=view==='orders'?renderOrders():view==='planning'?renderPlanning():renderSettings();content.setAttribute('aria-busy','false');disable(!online||busy);}
  function disable(value:boolean){content.querySelectorAll<HTMLButtonElement>('button').forEach(b=>{b.disabled=value||(!!b.dataset.change&&JSON.parse(b.dataset.change).action==='open'&&!data?.canOpen);});}
