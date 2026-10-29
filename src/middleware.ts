@@ -10,7 +10,8 @@ export const onRequest=defineMiddleware(async(context,next)=>{
  headers.set('Cache-Control','private, no-store');
  headers.set('X-Robots-Tag','noindex, nofollow');
  headers.set('X-Content-Type-Options','nosniff');
- headers.set('Referrer-Policy','no-referrer');
+ // Preserve Origin for native form POSTs while suppressing cross-origin referrers.
+ headers.set('Referrer-Policy','same-origin');
  headers.set('Content-Security-Policy',"frame-ancestors 'none'; form-action 'self'; base-uri 'self'");
  const env=getAdminEnvironment();
  let response:Response;

@@ -17,7 +17,7 @@ try{
   const response=await handler.fetch(new Request(`https://admin.test${path}`,{headers:{'x-forwarded-for':'127.0.0.1'}}));assert.equal(response.status,401,path);assert.deepEqual(await response.json(),{error:'UNAUTHORIZED'});
  }
  const login=await handler.fetch(new Request('https://admin.test/admin/login/',{headers:{'x-forwarded-for':'127.0.0.1'}}));
- assert.equal(login.status,200);assert.match(login.headers.get('set-cookie'),/HttpOnly/);assert.match(login.headers.get('set-cookie'),/Secure/);assert.match(login.headers.get('set-cookie'),/SameSite=Lax/i);
+ assert.equal(login.status,200);assert.equal(login.headers.get('referrer-policy'),'same-origin');assert.match(login.headers.get('set-cookie'),/HttpOnly/);assert.match(login.headers.get('set-cookie'),/Secure/);assert.match(login.headers.get('set-cookie'),/SameSite=Lax/i);
  const html=await login.text();assert.ok(html.includes('name="csrf"'));
  const csrf=html.match(/name="csrf"[^>]*value="([^"]+)"/)?.[1];assert.ok(csrf,'Missing rendered CSRF nonce');
  const csrfCookie=login.headers.get('set-cookie').split(';')[0];
