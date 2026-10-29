@@ -1,0 +1,23 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import {adminConfig} from '../../config/admin.config';
+import {csrfToken} from '../../server/admin/session';
+export const prerender=false;
+const error=Astro.url.searchParams.get('error');
+const message=error==='RATE_LIMITED'?adminConfig.errors.RATE_LIMITED:error?adminConfig.errors.LOGIN_FAILED:Astro.url.searchParams.has('session')?adminConfig.errors.UNAUTHORIZED:null;
+---
+<AdminLayout title="Connexion" login>
+ <section class="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-surface p-6 sm:mt-12 sm:p-8" aria-labelledby="login-title">
+  <p class="text-xs font-bold tracking-widest text-primary-dark uppercase">Au service du pizzaiolo</p>
+  <h1 id="login-title" class="mt-3 font-[family-name:var(--font-display)] text-5xl font-extrabold uppercase">Votre poste<br/>de commande.</h1>
+  <p class="mt-4 text-sm text-muted-foreground">Connectez-vous avec votre compte autorisé pour gérer le service.</p>
+  {message&&<p role="alert" class="mt-5 rounded-lg border border-primary-dark bg-primary-light p-3 text-sm text-text">{message}</p>}
+  <form method="post" action="/api/admin/login" class="mt-6 grid gap-5">
+   <input type="hidden" name="csrf" value={csrfToken(Astro.cookies)}/>
+   <label class="grid gap-2 text-sm font-semibold">E-mail<input type="email" name="email" required autocomplete="username" maxlength="254" class="min-h-12 w-full min-w-0 rounded-lg border border-[var(--color-border-strong)] bg-surface px-3 text-base"/></label>
+   <label class="grid gap-2 text-sm font-semibold">Mot de passe<input type="password" name="password" required autocomplete="current-password" maxlength="256" class="min-h-12 w-full min-w-0 rounded-lg border border-[var(--color-border-strong)] bg-surface px-3 text-base"/></label>
+   <button class="min-h-14 rounded-xl bg-text px-5 font-bold text-background">Se connecter</button>
+  </form>
+  <p class="mt-5 text-xs leading-relaxed text-muted-foreground">Accès réservé. Aucun compte ne peut être créé depuis cette interface.</p>
+ </section>
+</AdminLayout>

@@ -20,6 +20,7 @@ export default defineConfig({
   integrations: [
     sitemap({
       filter: (page) =>
+        !new URL(page).pathname.startsWith("/admin") &&
         !page.endsWith("/404/") &&
         !page.endsWith("/merci/") &&
         !page.endsWith("/robots.txt") &&

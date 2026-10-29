@@ -1,0 +1,21 @@
+---
+import {adminConfig} from '../../config/admin.config';
+interface Props{view:'orders'|'planning'|'settings';}
+const {view}=Astro.props;
+const titles={orders:'Commandes du jour',planning:'Planning du camion',settings:'Réglages du service'};
+---
+<div data-admin-view={view}>
+ <div class="flex flex-wrap items-end justify-between gap-4">
+  <div><p class="text-xs font-bold tracking-widest text-primary-dark uppercase">{adminConfig.title}</p><h1 class="mt-2 font-[family-name:var(--font-display)] text-4xl font-extrabold sm:text-5xl">{titles[view]}</h1></div>
+  <button data-refresh class="min-h-12 rounded-xl border border-[var(--color-border-strong)] bg-surface px-4 text-sm font-bold">Actualiser</button>
+ </div>
+ <p data-connection role="status" class="mt-4 text-sm text-muted-foreground">Connexion au service…</p>
+ <p data-message role="alert" class="mt-3 hidden rounded-xl border border-primary-dark bg-primary-light p-4 text-sm"></p>
+ {view==='orders'&&<div class="mt-4 flex flex-wrap items-center gap-4 text-sm">
+  <label class="flex min-h-11 items-center gap-2"><input data-sound type="checkbox" class="size-5 accent-primary-dark"/>Signal sonore</label>
+  <label class="flex min-h-11 items-center gap-2"><input data-history type="checkbox" class="size-5 accent-primary-dark"/>Afficher l’historique</label>
+  <span data-new role="status" class="font-semibold text-secondary-dark"></span>
+ </div>}
+ <div data-content aria-busy="true" class="mt-5 grid min-w-0 gap-4"><p class="rounded-xl border border-border bg-surface p-6">Chargement sécurisé…</p></div>
+</div>
+<script>import '../../scripts/admin-dashboard';</script>
