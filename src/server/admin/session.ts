@@ -3,8 +3,8 @@ import type {AdminEnvironment} from './environment';
 import type {AdminIdentity} from '../../types/admin';
 import {adminRpc,authFetch,AdminError} from './client';
 export const cookieNames={access:'__Host-forno-admin-access',refresh:'__Host-forno-admin-refresh',csrf:'__Host-forno-admin-csrf'} as const;
-const cookieOptions={path:'/',httpOnly:true,secure:true,sameSite:'strict' as const,maxAge:60*60*24*7};
-export function clearSession(cookies:AstroCookies):void{for(const key of Object.values(cookieNames))cookies.delete(key,{path:'/',secure:true,httpOnly:true,sameSite:'strict'});}
+const cookieOptions={path:'/',httpOnly:true,secure:true,sameSite:'lax' as const,maxAge:60*60*24*7};
+export function clearSession(cookies:AstroCookies):void{for(const key of Object.values(cookieNames))cookies.delete(key,{path:'/',secure:true,httpOnly:true,sameSite:'lax'});}
 export function csrfToken(cookies:AstroCookies):string{let token=cookies.get(cookieNames.csrf)?.value;if(!token||!/^[-a-z0-9]{36}$/.test(token)){token=crypto.randomUUID();cookies.set(cookieNames.csrf,token,cookieOptions);}return token;}
 export function validCsrf(request:Request,cookies:AstroCookies,token:string|null):boolean{
  const expected=cookies.get(cookieNames.csrf)?.value;

@@ -17,9 +17,9 @@ try{
   const response=await handler.fetch(new Request(`https://admin.test${path}`,{headers:{'x-forwarded-for':'127.0.0.1'}}));assert.equal(response.status,401,path);assert.deepEqual(await response.json(),{error:'UNAUTHORIZED'});
  }
  const login=await handler.fetch(new Request('https://admin.test/admin/login/',{headers:{'x-forwarded-for':'127.0.0.1'}}));
- assert.equal(login.status,200);assert.match(login.headers.get('set-cookie'),/HttpOnly/);assert.match(login.headers.get('set-cookie'),/Secure/);assert.match(login.headers.get('set-cookie'),/SameSite=Strict/i);
+ assert.equal(login.status,200);assert.match(login.headers.get('set-cookie'),/HttpOnly/);assert.match(login.headers.get('set-cookie'),/Secure/);assert.match(login.headers.get('set-cookie'),/SameSite=Lax/i);
  const html=await login.text();assert.ok(html.includes('name="csrf"'));assert.ok(!html.includes('TEST_ONLY_NOT_A_KEY'));
  assert.equal(login.headers.get('x-robots-tag'),'noindex, nofollow');assert.match(login.headers.get('content-security-policy'),/frame-ancestors 'none'/);
  const logout=await handler.fetch(new Request('https://admin.test/api/admin/logout',{method:'POST',headers:{'x-forwarded-for':'127.0.0.1','Content-Type':'application/x-www-form-urlencoded',Origin:'https://evil.test'},body:'csrf=forged'}));assert.equal(logout.status,403);
- console.log('Compiled admin: protected HTML/API, CSRF, HttpOnly/Secure/Strict cookie and private cache verified, with all network forbidden.');
+ console.log('Compiled admin: protected HTML/API, CSRF, HttpOnly/Secure/Lax cookie and private cache verified, with all network forbidden.');
 }finally{globalThis.fetch=originalFetch;}

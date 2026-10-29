@@ -16,7 +16,7 @@ Les pages sont rendues à la demande et protégées par middleware. Astro et Typ
 
 Le serveur appelle Supabase Auth pour vérifier le jeton ; il ne fait pas confiance au contenu d’un cookie ou aux métadonnées utilisateur. Ensuite, une RPC vérifie l’appartenance active à `forno_private.admin_users` **et** l’existence de la session dans `auth.sessions`, avec son échéance éventuelle. La révocation est contrôlée à chaque lecture et écriture.
 
-Jetons d’accès et de renouvellement uniquement dans des cookies `__Host-`, HttpOnly, Secure, SameSite=Strict, Path=/. Renouvellement côté serveur. Aucune clé Supabase, aucun jeton de session et aucune donnée client dans localStorage. Pas de client global partagé entre utilisateurs. La déconnexion renouvelle si nécessaire avant de révoquer la session locale Supabase, puis supprime les cookies.
+Jetons d’accès et de renouvellement uniquement dans des cookies `__Host-`, HttpOnly, Secure, SameSite=Lax, Path=/. Lax préserve la navigation depuis un lien extérieur ; les mutations restent protégées par Origin et CSRF. Renouvellement côté serveur. Aucune clé Supabase, aucun jeton de session et aucune donnée client dans localStorage. Pas de client global partagé entre utilisateurs. La déconnexion renouvelle si nécessaire avant de révoquer la session locale Supabase, puis supprime les cookies.
 
 Toutes les mutations, connexion et déconnexion comprises, exigent Origin identique et jeton CSRF correspondant au cookie HttpOnly. Les données et réponses d’erreur admin sont `private, no-store`, non indexables et non intégrables dans une frame. Messages nettoyés ; aucune journalisation des mots de passe, jetons ou données personnelles. Limitation durable des tentatives par empreinte HMAC de l’IP et de l’email.
 
