@@ -52,7 +52,7 @@ Signal visuel pour une nouvelle demande ; son facultatif activé par un geste ex
 | Local | 24 tests admin + 14 checkout + 33 commandes existantes | 71 réussis |
 | Local | TypeScript, build Astro/Vercel, fonction compilée publique | Réussis, commandes publiques fermées |
 | Fonction Vercel compilée | Pages admin anonymes, API anonymes, cookies, cache privé, CSRF | Réussis avec tout accès réseau interdit dans ce test |
-| Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; aucun WARN/ERROR, INFO attendues pour tables privées sans politiques publiques |
+| Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; INFO attendues pour tables privées sans politiques publiques. Après création du compte Auth, un WARN fournisseur apparaît pour la protection contre les mots de passe compromis, désactivée |
 | PostgreSQL Test réel | Autorisation/non-admin, cycle complet, conflit d’état, expiration, maintien de accepted après maintenance, 4 événements d’audit et révocation immédiate | Réussis dans une transaction intégralement annulée ; identités/session purement synthétiques non persistées, aucune connexion Auth simulée présentée comme réelle |
 | Preview réel | Accès /admin sans session, formulaire de connexion et identifiants synthétiques invalides | Redirection et refus vérifiés, aucune donnée client révélée |
 | Navigateur mobile | Formulaire de connexion à 390 px | Aucun débordement horizontal |
@@ -70,3 +70,11 @@ Vérifier la fonction compilée avec `node scripts/verify-admin-build.mjs`. Exé
 ## Avant Production
 
 Migration et autorisation d’un compte réel à approuver séparément. Valider l’authentification réelle, les parcours mobile/desktop et les transitions sur Preview, les pertes réseau, les mises à jour automatiques et la concurrence PostgreSQL réelle. Définir les conditions opérationnelles, la confidentialité et la conservation des journaux d’audit. Conserver commandes publiques et cron Production fermés jusqu’à validation explicite.
+
+## Compte Test et avertissement Auth
+
+Le propriétaire a créé puis confirmé le compte Auth demandé. Son UUID a été ajouté explicitement à admin_users, avec une trace admin_grant, uniquement sur Test. Aucun mot de passe transmis à l’agent.
+
+Le contrôle Supabase signale maintenant `auth_leaked_password_protection` (WARN). L’option de rejet des mots de passe connus comme compromis est désactivée ; elle est disponible sur le plan Pro et supérieur selon [la documentation Supabase](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Aucun changement de forfait ou action payante effectué. Ce point reste à décider avant Production.
+
+Trois demandes synthétiques de dashboard ont été préparées via la RPC métier dans Test : F-00000012 (acceptation), F-00000013 (refus), F-00000014 (expiration). Le service est refermé dans la même transaction avant commit et le verrou global reste fermé ; ces fixtures ne permettent aucune commande publique. Le numéro F-00000011 a été consommé par la séquence lors du test SQL annulé, sans commande persistante correspondante (comportement normal des séquences PostgreSQL).

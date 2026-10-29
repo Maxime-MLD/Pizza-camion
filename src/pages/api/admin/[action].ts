@@ -11,7 +11,7 @@ async function boundedBody(request:Request):Promise<string>{
  for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8192){await reader.cancel();throw new AdminError('ADMIN_INVALID',413);}text+=decoder.decode(value,{stream:true});}return text+decoder.decode();
 }
 export const ALL:APIRoute=async(context)=>{
- const {request,cookies,locals,params}=context;const action=params.action;const env=getAdminEnvironment();
+ const {request,cookies,locals,params}=context;const action=params.action;const env=getAdminEnvironment();let stage='request';
  try{
   if(request.method==='GET'&&['orders','planning','settings'].includes(action??'')){
    if(!locals.admin)throw new AdminError('UNAUTHORIZED',401);
@@ -23,17 +23,21 @@ export const ALL:APIRoute=async(context)=>{
   const form=contentType.startsWith('application/x-www-form-urlencoded')?new URLSearchParams(body):null;
   if(!validCsrf(request,cookies,form?.get('csrf')??request.headers.get('X-CSRF-Token')))throw new AdminError('CSRF',403);
   if(action==='login'){
+   stage='schema';
    if(!form)throw new AdminError('ADMIN_INVALID',400);
    const input=loginSchema.safeParse({email:form.get('email')?.trim().toLowerCase(),password:form.get('password')});if(!input.success)throw new AdminError('LOGIN_FAILED',400);
+   stage='rate-limit';
    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.ORDER_RATE_LIMIT_SALT!),{name:'HMAC',hash:'SHA-256'},false,['sign']);
    for(const subject of [context.clientAddress,input.data.email]){
     const digest=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`admin-login:${subject}`));
     const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
     if(!await adminRpc<boolean>(env,'forno_rate_limit',{p_key:hash,p_limit:10}))throw new AdminError('RATE_LIMITED',429);
    }
+   stage='auth';
    const response=await authFetch(env,'token?grant_type=password','POST',input.data);
    if(!response.ok)throw new AdminError(response.status===429?'RATE_LIMITED':'LOGIN_FAILED',response.status===429?429:401);
    const tokens=await response.json() as {access_token:string;refresh_token:string};
+   stage='authorization';
    try{await validateAccess(env,tokens.access_token);}catch(error){await authFetch(env,'logout?scope=local','POST',undefined,tokens.access_token).catch(()=>undefined);throw error;}
    writeTokens(cookies,tokens);cookies.delete(cookieNames.csrf,{path:'/',secure:true});return context.redirect('/admin/',303);
   }
@@ -58,7 +62,10 @@ export const ALL:APIRoute=async(context)=>{
   return json(await adminRpc(env,'forno_admin_change',{p_actor:locals.admin.userId,p_session:locals.admin.sessionId,p_action:change,p_data:data}));
  }catch(error){
   const e=error instanceof AdminError?error:new AdminError('UNAVAILABLE');
-  if(action==='login'){clearSession(cookies);return context.redirect(`/admin/login/?error=${e.code==='RATE_LIMITED'?'RATE_LIMITED':'LOGIN_FAILED'}`,303);}
+  if(action==='login'){
+   // Enumerated code/stage only: never log body, credentials, tokens, email or transport errors.
+   console.warn('FORNO_ADMIN_LOGIN_FAILURE',stage,e.code);
+   clearSession(cookies);return context.redirect(`/admin/login/?error=${e.code==='RATE_LIMITED'?'RATE_LIMITED':'LOGIN_FAILED'}`,303);}
   return json({error:e.code},e.status);
  }
 };
