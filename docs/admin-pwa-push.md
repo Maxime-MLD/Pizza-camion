@@ -83,7 +83,14 @@ Le 30 octobre à 08 h 10 Europe/Paris, après le signal du propriétaire confirm
 
 Le propriétaire confirme explicitement : notification reçue sur l’iPhone en arrière-plan, appui sur l’alerte et ouverture correcte de FORNO. Admin avec la demande en attente. Ce résultat valide la chaîne réelle nouvelle commande PostgreSQL → outbox → pg_net → Edge/VAPID → Apple → Service Worker → notification système → dashboard privé. Il ne constitue pas un nouveau test du checkout navigateur/Turnstile : la commande synthétique passe par la RPC métier native, aucun endpoint de contournement n’a été ajouté.
 
-L’essai Android reste différé par le propriétaire. Le retrait/réabonnement matériel est en cours de vérification ; le hors-ligne réel sur téléphone reste à tester. La page statique et la logique de cache ont été vérifiées séparément. La commande Test conserve son expiration normale de quinze minutes, sans activation du cron de maintenance ni suppression de données.
+L’essai Android reste différé par le propriétaire. Le retrait/réabonnement matériel est validé sur iPhone ; le hors-ligne réel sur téléphone reste à tester. La page statique et la logique de cache ont été vérifiées séparément. La commande Test conserve son expiration normale de quinze minutes, sans activation du cron de maintenance ni suppression de données.
 
 
 Capture du guide servi par le Preview à 390 px, conservée hors dépôt : `/tmp/forno-pwa-offline-full.jpg`. La visualisation directe du guide ne constitue pas à elle seule un test de coupure réseau matérielle. Le contrôle VM vérifie le fallback et l’absence de cache des routes privées.
+
+
+### Retrait et réabonnement réels sur iPhone
+
+Le propriétaire confirme la désactivation, la réactivation et la réception d’un nouveau test. Vérification Supabase Test : l’ancien abonnement est révoqué à 08:15:36 Europe/Paris, raison owner_removed ; endpoint, hash d’endpoint, p256dh et auth_key sont effacés. Un nouvel abonnement est créé à 08:15:42. Sa notification test est envoyée à 08:15:48 en une tentative, réponse Apple 201, réception matérielle confirmée par le propriétaire. La commande F-00000019 conserve une seule livraison : aucun rattrapage de cette ancienne demande vers le nouvel abonnement. Le service du jour reste fermé.
+
+Les essais iPhone confirment désormais notification test, nouvelle commande en arrière-plan, clic vers la demande privée, désactivation et réabonnement avec nouvelle réception. Android est toujours explicitement différé ; hors-ligne matériel et retrait distant depuis un second appareil restent non vérifiés. Aucun changement de code ni redéploiement nécessaire pour consigner ces résultats ; seul ce rapport est modifié. Production non ouverte.
