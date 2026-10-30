@@ -3,17 +3,21 @@ import { checkoutConfig as copy, pickupAvailabilityConfig } from "../../config/c
 import OrderConfirmation from "./OrderConfirmation.astro";
 import Container from "../ui/Container.astro";
 
+interface Props {validation?:boolean;}
+const {validation=false}=Astro.props;
+const Heading=validation?'h2':'h1';
+
 const primaryButton = "focus-ring inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-primary-dark)] px-6 py-3 text-center font-bold text-[var(--color-primary-foreground)] no-underline transition-colors hover:bg-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-55";
 const backButton = "focus-ring inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] px-6 py-3 font-semibold hover:bg-[var(--color-surface-2)]";
 const fieldClass = "focus-ring mt-2 min-h-12 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-3 text-base text-[var(--color-text)] aria-invalid:border-[var(--color-primary-dark)]";
 const reviewFields = ["date", "village", "address", "slot", "name", "phone", "comment"] as const;
 ---
 
-<section data-checkout class="bg-[var(--color-background)] py-12 sm:py-18 lg:py-22">
+<section data-checkout data-checkout-mode={validation?'admin-validation':'public'} class="bg-[var(--color-background)] py-12 sm:py-18 lg:py-22">
   <Container>
     <header data-checkout-header class="max-w-[52rem]">
       <p class="text-xs font-extrabold tracking-[0.16em] text-[var(--color-primary-dark)]">{copy.eyebrow}</p>
-      <h1 class="mt-4 font-display text-[clamp(3rem,6.5vw,6rem)] leading-[0.88] font-extrabold tracking-[-0.035em]">{copy.title}</h1>
+      <Heading class="mt-4 font-display text-[clamp(3rem,6.5vw,6rem)] leading-[0.88] font-extrabold tracking-[-0.035em]">{copy.title}</Heading>
       <p class="mt-6 max-w-[38rem] text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">{copy.description}</p>
     </header>
 

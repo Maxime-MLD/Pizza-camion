@@ -1,3 +1,4 @@
+import {previewBindings} from './deployment-fixture';
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -9,7 +10,7 @@ import {adminChangeSchema} from '../src/server/admin/schema';
 import {adminRpc} from '../src/server/admin/client';
 const actor='a0000000-0000-4000-8000-000000000001',session='a0000000-0000-4000-8000-000000000002';
 const other='a0000000-0000-4000-8000-000000000003',otherSession='a0000000-0000-4000-8000-000000000004';
-const env:AdminEnvironment={FORNO_ADMIN_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'s'.repeat(32)};
+const env:AdminEnvironment={...previewBindings,FORNO_ADMIN_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'s'.repeat(32)};
 function cookies(values:Record<string,string>={}){const options:Record<string,unknown>[]=[];return {values,options,api:{get:(k:string)=>values[k]?{value:values[k]}:undefined,set:(k:string,v:string,o:Record<string,unknown>)=>{values[k]=v;options.push(o);},delete:(k:string)=>{delete values[k];}} as unknown as AstroCookies};}
 const jwt=(sub=actor,sid=session)=>`eyJhbGciOiJ0ZXN0In0.${btoa(JSON.stringify({sub,session_id:sid}))}.TEST`;
 const db=new PGlite();

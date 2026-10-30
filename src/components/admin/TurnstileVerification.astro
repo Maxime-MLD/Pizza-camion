@@ -1,0 +1,8 @@
+<section data-turnstile-verification class="mt-6 rounded-xl border border-border bg-surface p-5" aria-labelledby="verification-title">
+ <h2 id="verification-title" class="text-xl font-bold">Vérifier le vrai widget</h2>
+ <p class="mt-3 text-sm text-muted-foreground">Ce contrôle vérifie uniquement le jeton auprès de Cloudflare. Il ne crée aucune commande. Un jeton dépensé doit être refusé lorsqu’il est présenté pour un nouvel essai.</p>
+ <div data-verification-widget class="mt-5"></div>
+ <div class="mt-4 flex flex-wrap gap-3"><button data-verification-check disabled class="min-h-12 rounded-lg bg-text px-4 font-bold text-background disabled:opacity-50">Vérifier le jeton</button><button data-verification-reset class="min-h-12 rounded-lg border border-border px-4 font-bold">Renouveler le jeton</button></div>
+ <p data-verification-result role="status" class="mt-4 text-sm font-semibold"></p>
+</section>
+<script>import '../../scripts/turnstile-verification';</script>

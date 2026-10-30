@@ -3,7 +3,10 @@ import {readdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 const directory='supabase/migrations';
-const files=(await readdir(directory)).filter(name=>/^\d+_.+\.sql$/.test(name)).sort();
+// Legacy baseline only. Admin/Push additions use prepare-production-release.mjs.
+const baseline=['202610280001_orders.sql','202610280002_catalogue.sql','202610280003_maintenance.sql','20261028095508_harden_forno_data_api.sql'];
+const files=(await readdir(directory)).filter(name=>baseline.includes(name)).sort();
+if(files.length!==baseline.length)throw Error('BASELINE_FILE_MISSING');
 const migrations=await Promise.all(files.map(async file=>{const sql=await readFile(`${directory}/${file}`,'utf8');return {file,version:file.split('_')[0],sql,hash:createHash('sha256').update(sql).digest('hex')};}));
 const quote=value=>`'${value.replaceAll("'","''")}'`;
 const values=migrations.map(m=>`(${quote(m.version)},${quote(m.file)},${quote(m.hash)},$forno_body_${m.version}$${m.sql}$forno_body_${m.version}$)`).join(',\n');

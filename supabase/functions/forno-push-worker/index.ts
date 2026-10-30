@@ -1,6 +1,5 @@
 import webpush from 'npm:web-push@3.6.7';
-import {dispatchPush,type VapidConfig,type WorkerRpc} from '../_shared/push-worker.ts';
-import {pushConfig} from '../../../src/config/push.config.ts';
+import {dispatchPush,workerProjectMatches,type VapidConfig,type WorkerRpc} from '../_shared/push-worker.ts';
 // Gateway JWT checks are replaced by a dedicated 256-bit worker token plus a service-role-only RPC.
 // There is no CORS and no caller-supplied notification content, endpoint, URL or VAPID key.
 Deno.serve(async request=>{
@@ -8,7 +7,9 @@ Deno.serve(async request=>{
  const token=request.headers.get('Authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
  if(!token)return new Response(null,{status:401});
  const url=Deno.env.get('SUPABASE_URL');
- if(url!==`https://${pushConfig.testProjectRef}.supabase.co`)return new Response(null,{status:503});
+ // SUPABASE_URL and the matching server key are platform-provided for this project.
+ // No Test/Production URL or caller-selected project is bundled into the worker.
+ if(!workerProjectMatches(url,Deno.env.get('DENO_DEPLOYMENT_ID')))return new Response(null,{status:503});
  let key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
  try{const keys=JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')??'{}') as Record<string,string>;key=Object.values(keys).find(k=>k.startsWith('sb_secret_'))??key;}catch{/* Legacy server key remains a supported fallback. */}
  if(!key)return new Response(null,{status:503});

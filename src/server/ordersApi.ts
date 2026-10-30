@@ -1,7 +1,8 @@
 import { orderRequestSchema } from './orderSchema';
 import { configured, createRpc, DatabaseError, type OrderEnvironment, type Rpc } from './supabase';
 import type { LivePickupAvailability, OrderReceipt } from '../types/checkoutApi';
-import { safeOrderEnvironment, validTurnstileResponse } from './orderEnvironmentGuard';
+import {verifyTurnstile} from './turnstileVerification';
+import { safeOrderEnvironment } from './orderEnvironmentGuard';
 export const json = (body: unknown, status=200): Response => Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Origin'}});
 export const failure = (error: string,status: number): Response => json({error},status);
 const hex = (bytes: ArrayBuffer): string => Array.from(new Uint8Array(bytes),(v)=>v.toString(16).padStart(2,'0')).join('');
@@ -59,13 +60,9 @@ export async function handleOrdersApi(request: Request, env: OrderEnvironment, i
     // Normalize array ordering so retries of the same business request share a fingerprint.
     order.lines.sort((a,b)=>a.pizzaId.localeCompare(b.pizzaId));
     const transport=dependencies.transport??fetch;
-    const verification=await transport('https://challenges.cloudflare.com/turnstile/v0/siteverify',{
-      method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(10000),
-      body:JSON.stringify({secret:env.TURNSTILE_SECRET_KEY,response:turnstileToken,idempotency_key:await verificationKey(order.idempotencyKey,turnstileToken)}),
-    });
-    if(!verification.ok) return failure('VERIFICATION_UNAVAILABLE',503);
-    const check:unknown=await verification.json();
-    if(!validTurnstileResponse(check,url.hostname,env))return failure('BOT_VERIFICATION_FAILED',400);
+    const verification=await verifyTurnstile(turnstileToken,await verificationKey(order.idempotencyKey,turnstileToken),url.hostname,env,transport);
+    if(verification==='unavailable')return failure('VERIFICATION_UNAVAILABLE',503);
+    if(verification!=='valid')return failure('BOT_VERIFICATION_FAILED',400);
     const receipt=await rpc<OrderReceipt|{error:string}>('forno_create_order',{
       p_request:order,p_request_hash:await requestDigest(order),p_abuse_key:await abuseKey(env.ORDER_RATE_LIMIT_SALT!,ip,'order'),
     });

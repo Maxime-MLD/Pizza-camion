@@ -1,8 +1,6 @@
-import {orderEnvironments} from './order-environments.config.ts';
 export const pushConfig={
  name:'FORNO. Admin',shortName:'FORNO.',scope:'/admin/',startUrl:'/admin/',manifest:'/admin/manifest.webmanifest',worker:'/admin/sw.js',offline:'/admin/offline/',
- testOrigin:'https://pizza-git-codex-test-commandes-maxime-mlds-projects.vercel.app',
- subject:'https://pizza-two-bay.vercel.app/',testProjectRef:orderEnvironments.testSupabaseRef,
+ subject:'https://pizza-two-bay.vercel.app/',
  workerName:'forno-push-worker',cacheName:'forno-admin-static-v1',
  providerHosts:['fcm.googleapis.com','updates.push.services.mozilla.com','web.push.apple.com'],
  icons:{small:'/admin/icons/icon-192.png',large:'/admin/icons/icon-512.png',maskable:'/admin/icons/maskable-512.png',apple:'/admin/icons/apple-touch-icon.png'},

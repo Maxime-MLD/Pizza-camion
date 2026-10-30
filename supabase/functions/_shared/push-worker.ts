@@ -33,3 +33,9 @@ export async function dispatchPush(rpc:WorkerRpc,token:string,config:VapidConfig
  }
  return stats;
 }
+/** Match the platform URL to its own immutable deployment identity when hosted. */
+export function workerProjectMatches(url:string|undefined,deploymentId:string|undefined):url is string{
+ if(!url||!/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url))return false;
+ const ref=new URL(url).hostname.split('.')[0]!;
+ return !deploymentId||deploymentId.startsWith(`${ref}_`);
+}

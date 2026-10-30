@@ -1,5 +1,18 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "supabase/functions/forno-push-worker"]
+  "include": [
+    ".astro/types.d.ts",
+    "**/*"
+  ],
+  "exclude": [
+    "dist",
+    "supabase/functions/forno-push-worker"
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@forno/deployment": [
+        "./src/config/deployment.preview.ts"
+      ]
+    }
+  }
 }

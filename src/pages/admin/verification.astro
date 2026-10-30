@@ -1,0 +1,15 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import CheckoutFlow from '../../components/checkout/CheckoutFlow.astro';
+import TurnstileVerification from '../../components/admin/TurnstileVerification.astro';
+import {getAdminEnvironment} from '../../server/admin/environment';
+import {privateValidationEnabled} from '../../server/validation/environment';
+import {validationConfig as copy} from '../../config/validation.config';
+export const prerender=false;
+const enabled=privateValidationEnabled(getAdminEnvironment(),Astro.url);
+---
+<AdminLayout title={copy.title}>
+ <h1 class="font-display text-5xl font-extrabold">{copy.title}</h1>
+ <p class="mt-5 rounded-xl border border-border bg-surface p-5 font-semibold">{enabled?copy.notice:copy.disabled}</p>
+ {enabled&&<><TurnstileVerification/><CheckoutFlow validation/></>}
+</AdminLayout>

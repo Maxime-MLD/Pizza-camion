@@ -5,7 +5,8 @@ import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const directory=resolve('.vercel/output/functions/_render.func');
 const settings=JSON.parse(await readFile(join(directory,'.vc-config.json'),'utf8'));
-Object.assign(process.env,{FORNO_ADMIN_ENABLED:'true',FORNO_ORDERS_ENABLED:'false',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'x'.repeat(32)});
+const production=process.argv.includes('--production');
+Object.assign(process.env,{FORNO_ADMIN_ENABLED:'true',FORNO_ORDERS_ENABLED:'false',VERCEL_ENV:production?'production':'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:production?'https://fqjkkjvrklpzhwmswlsy.supabase.co':'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'x'.repeat(32)});
 const {default:handler}=await import(pathToFileURL(join(directory,settings.handler)).href);
 const originalFetch=globalThis.fetch;globalThis.fetch=async()=>{throw Error('NETWORK_FORBIDDEN_IN_COMPILED_TEST');};
 try{

@@ -1,3 +1,4 @@
+import {checkoutTransport} from "./checkoutTransport";
 import { checkoutConfig as copy } from "../config/checkout.config";
 import { cartStore } from "../stores/cartStore";
 import type { LivePickupAvailability, OrderReceipt, SubmitOrderRequest } from "../types/checkoutApi";
@@ -8,6 +9,9 @@ import { validateCustomer } from "../utils/orderValidation";
 import type { CustomerDetails } from "../types/order";
 
 function initializeCheckout(root: HTMLElement): void {
+  const channel=checkoutTransport(root.dataset.checkoutMode==='admin-validation',document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content??'');
+  // Keep private validation retries separate from the ordinary customer's attempt.
+  const attemptStorage={getItem:(key:string)=>sessionStorage.getItem(channel.storagePrefix+key),setItem:(key:string,value:string)=>sessionStorage.setItem(channel.storagePrefix+key,value),removeItem:(key:string)=>sessionStorage.removeItem(channel.storagePrefix+key)};
   const query = <T extends HTMLElement = HTMLElement>(selector: string): T => root.querySelector<T>(selector)!;
   const content = query("[data-checkout-content]");
   const empty = query("[data-checkout-empty]");
@@ -26,7 +30,7 @@ function initializeCheckout(root: HTMLElement): void {
   let botReset: (() => void) | undefined;
   let botMounted = false;
   let attempt: OrderAttempt | null = null;
-  try { attempt = readAttempt(sessionStorage); } catch { /* Only memory fallback; submission requires persistence. */ }
+  try { attempt = readAttempt(attemptStorage); } catch { /* Only memory fallback; submission requires persistence. */ }
   let pendingBody: SubmitOrderRequest | null = null;
   let serviceId = "";
   let slotId = "";
@@ -105,7 +109,7 @@ function initializeCheckout(root: HTMLElement): void {
     refreshing = (async () => {
       try {
         const count = getCartCount(cart);
-        const response = await fetch(`/api/pickup-slots?quantity=${count || 1}`, {cache:"no-store",signal:AbortSignal.timeout(12000)});
+        const response = await fetch(`${channel.slots}?quantity=${count || 1}`, {cache:"no-store",signal:AbortSignal.timeout(12000)});
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "TEMPORARILY_UNAVAILABLE");
         pickupState = data as LivePickupAvailability;
@@ -222,7 +226,7 @@ function initializeCheckout(root: HTMLElement): void {
     // Keep pizzas added meanwhile, including changes received from another tab.
     if (attempt && !attempt.consumed) {
       attempt.consumed = true;
-      try { saveAttempt(sessionStorage, attempt); } catch { /* receipt already confirmed */ }
+      try { saveAttempt(attemptStorage, attempt); } catch { /* receipt already confirmed */ }
       for (const line of receipt.lines) cartStore.setQuantity(line.pizzaId, Math.max(0,(cartStore.getSnapshot()[line.pizzaId] ?? 0)-line.quantity));
     }
     content.hidden=true; empty.hidden=true;
@@ -239,13 +243,13 @@ function initializeCheckout(root: HTMLElement): void {
   }
   async function recover(): Promise<boolean> {
     if(!attempt)return false;
-    const response=await fetch("/api/orders",{headers:{"X-Order-Request-Key":attempt.key},cache:"no-store",signal:AbortSignal.timeout(12000)});
+    const response=await fetch(channel.orders,{headers:{"X-Order-Request-Key":attempt.key},cache:"no-store",signal:AbortSignal.timeout(12000)});
     if(!response.ok)return false;
     const {receipt}=await response.json() as {receipt:OrderReceipt|null};
     if(!receipt)return false;
     showConfirmation(receipt);return true;
   }
-  query("[data-order-confirmation] a").addEventListener("click",()=>{try{forgetAttempt(sessionStorage);}catch{/* no PII stored */}});
+  query("[data-order-confirmation] a").addEventListener("click",()=>{try{forgetAttempt(attemptStorage);}catch{/* no PII stored */}});
   sendButton.addEventListener("click",async()=>{
     if(submissionLocked||sending||confirmed)return;
     submissionLocked=true;renderSend();
@@ -257,21 +261,21 @@ function initializeCheckout(root: HTMLElement): void {
       const lines=getCartLines(cart).map(({pizzaId,quantity})=>({pizzaId,quantity}));
       attempt ??= {key:crypto.randomUUID(),lines,consumed:false};
       // Persist just the capability UUID and pizza quantities, never contact information.
-      try{saveAttempt(sessionStorage,attempt);}catch{globalError(copy.storageUnavailable);return;}
+      try{saveAttempt(attemptStorage,attempt);}catch{globalError(copy.storageUnavailable);return;}
       pendingBody={idempotencyKey:attempt.key,lines,serviceId,slotId,date:pickupState.date,village:pickupState.service.village,customer,turnstileToken:botToken};
     }
     sending=true;renderSend();globalError();
     try {
       // A fresh bot token may replace an expired token; it is excluded from the SQL fingerprint.
       const body={...pendingBody,turnstileToken:botToken || pendingBody!.turnstileToken};
-      const response=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+      const response=await fetch(channel.orders,{method:"POST",headers:{"Content-Type":"application/json",...channel.headers},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
       const result=await response.json() as {receipt?:OrderReceipt;error?:string};
       if(response.ok&&result.receipt){showConfirmation(result.receipt);return;}
       const code=result.error??"unknown";
       if(response.status===409&&code==="IDEMPOTENCY_CONFLICT"){if(await recover())return;}
       // 4xx business errors are definitive non-insertions. Network/5xx retain the key and frozen request.
       if(response.status>=400&&response.status<500&&code!=="IDEMPOTENCY_CONFLICT"&&code!=="BOT_VERIFICATION_FAILED"){
-        pendingBody=null;attempt=null;try{forgetAttempt(sessionStorage);}catch{/* memory state remains */}
+        pendingBody=null;attempt=null;try{forgetAttempt(attemptStorage);}catch{/* memory state remains */}
         await refreshAvailability();goToStep(1);
       }
       globalError(apiMessage(code));

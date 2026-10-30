@@ -1,3 +1,4 @@
+import {previewBindings} from './deployment-fixture';
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -32,7 +33,7 @@ const count=async(table:string)=>(await db.query<{n:number}>(`select count(*)::i
 const finish=(b:PushBatch,status:number)=>worker('finish',{deviceId:b.device.id,lease:b.lease,status});
 
 test('Push environment requires the isolated branch, database, Preview and stable origin',()=>{
- const env={FORNO_ADMIN_ENABLED:'true',FORNO_PUSH_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co'};
+ const env={...previewBindings,FORNO_ADMIN_ENABLED:'true',FORNO_PUSH_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co'};
  assert.ok(pushEnabled(env));assert.ok(pushOriginAllowed(env,new URL('https://pizza-git-codex-test-commandes-maxime-mlds-projects.vercel.app/api/admin/push')));
  assert.equal(pushEnabled({...env,VERCEL_ENV:'production'}),false);assert.equal(pushEnabled({...env,SUPABASE_URL:'https://fqjkkjvrklpzhwmswlsy.supabase.co'}),false);assert.equal(pushOriginAllowed(env,new URL('https://unrelated.vercel.app')),false);
 });

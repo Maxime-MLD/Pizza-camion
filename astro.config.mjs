@@ -1,3 +1,4 @@
+import {fileURLToPath} from "node:url";
 import cloudflare from "@astrojs/cloudflare";
 import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
@@ -8,6 +9,8 @@ import { siteConfig } from "./src/config/site.config.ts";
 // Vercel is the default target. Sites retains an explicit Cloudflare build.
 const deploymentTarget = process.env.FORNO_DEPLOY_TARGET ?? "vercel";
 if (!["vercel", "sites"].includes(deploymentTarget)) throw new Error("FORNO_DEPLOY_TARGET must be vercel or sites");
+
+const profile=process.env.VERCEL_ENV==='production'?'production':'preview';
 
 export default defineConfig({
   output: "static",
@@ -32,6 +35,7 @@ export default defineConfig({
     }),
   ],
   vite: {
+    resolve: {alias: {"@forno/deployment": fileURLToPath(new URL(`./src/config/deployment.${profile}.ts`,import.meta.url))}},
     plugins: [tailwindcss()],
   },
 });

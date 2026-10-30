@@ -1,3 +1,4 @@
+import {previewBindings} from './deployment-fixture';
 import test, {before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -244,7 +245,7 @@ test('API : contrat de lecture avec RPC injectée sans report à demain, erreurs
  }
 });
 
-const previewEnv={...env,VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:orderEnvironments.testBranch,
+const previewEnv={...env,...previewBindings,VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:orderEnvironments.testBranch,
  SUPABASE_URL:`https://${orderEnvironments.testSupabaseRef}.supabase.co`,FORNO_TURNSTILE_MODE:'official-test',
  TURNSTILE_SITE_KEY:'1x00000000000000000000AA',TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA'};
 test('Isolation : Preview exige la branche et la base de test exactes avant tout appel réseau',async()=>{

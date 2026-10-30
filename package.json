@@ -17,7 +17,10 @@
     "test:orders": "node --test scripts/test-orders.mjs",
     "test:turnstile:network": "node scripts/verify-turnstile-network.mjs",
     "build:sites": "FORNO_DEPLOY_TARGET=sites astro build && node scripts/package-astro-worker.mjs",
-    "test:push": "node --test scripts/test-push.mjs"
+    "test:push": "node --test scripts/test-push.mjs",
+    "test:production": "node --test scripts/test-production.mjs",
+    "prepare:production": "node scripts/prepare-production-release.mjs",
+    "build:production": "VERCEL_ENV=production astro build"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.3.0",

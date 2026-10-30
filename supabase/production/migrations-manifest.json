@@ -1,0 +1,57 @@
+{
+  "targetProjectRef": "fqjkkjvrklpzhwmswlsy",
+  "baseline": [
+    {
+      "filename": "202610280001_orders.sql",
+      "version": "202610280001",
+      "sha256": "7d36203c44c07027f8012df0a7006075e308e3d11315fceb1c29e7b53d95b6f7"
+    },
+    {
+      "filename": "202610280002_catalogue.sql",
+      "version": "202610280002",
+      "sha256": "570254e5031a78a751d6c8e61353782705c66d3a702309d1542fd75402034bc8"
+    },
+    {
+      "filename": "202610280003_maintenance.sql",
+      "version": "202610280003",
+      "sha256": "00998561c9b2747c3f80cef4f70d588e0c02f4904593d54b84f714965e75c7c4"
+    },
+    {
+      "filename": "20261028095508_harden_forno_data_api.sql",
+      "version": "20261028095508",
+      "sha256": "b174b2cdeae79335d7fd3fcd1f579d7c51d8d38e4654023f5ed3c9283687d743"
+    }
+  ],
+  "additions": [
+    {
+      "filename": "20261029091206_forno_private_admin.sql",
+      "version": "20261029091206",
+      "sha256": "d4d718c59a92800b47280e198b6eaa06cc4110648d0ed604141a4b14ca54844f"
+    },
+    {
+      "filename": "20261029092544_harden_admin_settings_concurrency.sql",
+      "version": "20261029092544",
+      "sha256": "1a346feb51ed830383acc47c819da9eeb5eeed9328d818ef2a3f374a9fe8d1bf"
+    },
+    {
+      "filename": "20261030051016_fix_admin_singleton_update.sql",
+      "version": "20261030051016",
+      "sha256": "525d6cf3603f08ef992c622fe327183236b3ca31bbc0340335579b3d66cb7e00"
+    },
+    {
+      "filename": "20261030055421_forno_push_outbox.sql",
+      "version": "20261030055421",
+      "sha256": "b00a4af4ccacb67723b0af0e6948dac0e7fc4639292e5ab1f6e90a34521d643d"
+    },
+    {
+      "filename": "20261030055422_forno_push_dispatch.sql",
+      "version": "20261030055422",
+      "sha256": "eb83395284765366d8a15e0606c69e07ec453f3cdd3c974a37cecab174cbe92a"
+    },
+    {
+      "filename": "20261030061606_harden_push_platform_integration.sql",
+      "version": "20261030061606",
+      "sha256": "272b78c5330a0dc304a59c74d05a6e448027a105af22a0c135a187c4fc235ee6"
+    }
+  ]
+}

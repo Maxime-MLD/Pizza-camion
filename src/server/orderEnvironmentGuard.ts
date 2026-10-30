@@ -1,4 +1,4 @@
-import { orderEnvironments } from '../config/order-environments.config';
+import {matchesDeployment,isolatedPreview} from './deploymentGuard';
 import type { OrderEnvironment } from './supabase';
 
 // Public dummy credentials documented by Cloudflare, never a customer's secret.
@@ -9,18 +9,11 @@ const testSecrets=[
   '3x0000000000000000000000000000000AA',
 ];
 
-export function isIsolatedPreview(env: OrderEnvironment): boolean {
-  if(env.VERCEL_ENV!=='preview'||env.VERCEL_GIT_COMMIT_REF!==orderEnvironments.testBranch)return false;
-  try {
-    const url=new URL(env.SUPABASE_URL??'');
-    return url.origin===`https://${orderEnvironments.testSupabaseRef}.supabase.co`
-      && !url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/';
-  } catch {return false;}
-}
+export const isIsolatedPreview=isolatedPreview;
 
 export function safeOrderEnvironment(env: OrderEnvironment): boolean {
   // Vercel supplies these server-only identities. No request header can select test mode.
-  if(env.VERCEL_ENV==='preview'&&!isIsolatedPreview(env))return false;
+  if(env.VERCEL_ENV&&!matchesDeployment(env))return false;
   if(env.FORNO_TURNSTILE_MODE==='official-test'){
     return isIsolatedPreview(env)&&env.TURNSTILE_SITE_KEY===testSiteKey&&testSecrets.includes(env.TURNSTILE_SECRET_KEY??'');
   }

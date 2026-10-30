@@ -1,5 +1,5 @@
 import type {APIRoute} from 'astro';
-import {getAdminEnvironment,mayOpenTest} from '../../../server/admin/environment';
+import {getAdminEnvironment,mayOpenService} from '../../../server/admin/environment';
 import {adminRpc,authFetch,AdminError} from '../../../server/admin/client';
 import {adminChangeSchema,loginSchema} from '../../../server/admin/schema';
 import {clearSession,cookieNames,validCsrf,validateAccess,writeTokens} from '../../../server/admin/session';
@@ -14,7 +14,7 @@ export const ALL:APIRoute=async(context)=>{
   if(request.method==='GET'&&['orders','planning','settings'].includes(action??'')){
    if(!locals.admin)throw new AdminError('UNAUTHORIZED',401);
    const data=await adminRpc<Record<string,unknown>>(env,'forno_admin_read',{p_actor:locals.admin.userId,p_session:locals.admin.sessionId,p_view:action});
-   return json({...data,account:locals.admin.email,canOpen:mayOpenTest(env),publicOrdersEnabled:env.FORNO_ORDERS_ENABLED==='true'});
+   return json({...data,account:locals.admin.email,canOpen:mayOpenService(env),publicOrdersEnabled:env.FORNO_ORDERS_ENABLED==='true'});
   }
   if(request.method!=='POST')return new Response(null,{status:405,headers:{Allow:'POST'}});
   const contentType=request.headers.get('Content-Type')??'';const body=await boundedBody(request);
@@ -62,7 +62,7 @@ export const ALL:APIRoute=async(context)=>{
   let raw:unknown;try{raw=JSON.parse(body);}catch{throw new AdminError('ADMIN_INVALID',400);}
   const parsed=adminChangeSchema.safeParse(raw);if(!parsed.success)throw new AdminError('ADMIN_INVALID',400);
   const {action:change,...data}=parsed.data;
-  if(change==='open'&&!mayOpenTest(env))throw new AdminError('ADMIN_OPEN_LOCKED',403);
+  if(change==='open'&&!mayOpenService(env))throw new AdminError('ADMIN_OPEN_LOCKED',403);
   return json(await adminRpc(env,'forno_admin_change',{p_actor:locals.admin.userId,p_session:locals.admin.sessionId,p_action:change,p_data:data}));
  }catch(error){
   const e=error instanceof AdminError?error:new AdminError('UNAVAILABLE');

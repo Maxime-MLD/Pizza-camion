@@ -1,6 +1,6 @@
 import { businessConfig } from "./business.config";
 
-const TODO_CANONICAL_URL = "https://pizza-camion-forno.quirkyhawk35.chatgpt.site";
+const TODO_CANONICAL_URL = "https://pizza-two-bay.vercel.app";
 const TODO_THEME_COLOR = "#F7EEDB";
 const TODO_MANIFEST_BACKGROUND_COLOR = "#F7EEDB";
 const TODO_SITE_LANGUAGE = "fr";

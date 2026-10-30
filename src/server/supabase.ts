@@ -1,6 +1,11 @@
 /** Server-only native PostgREST client: no browser SDK, cookies or user session. */
 export interface OrderEnvironment {
   FORNO_ORDERS_ENABLED?: string;
+  FORNO_DEPLOYMENT_PROFILE?: string;
+  FORNO_EXPECTED_SUPABASE_REF?: string;
+  FORNO_APP_ORIGIN?: string;
+  FORNO_PREVIEW_BRANCH?: string;
+  FORNO_VALIDATION_ENABLED?: string;
   FORNO_TURNSTILE_MODE?: string;
   VERCEL_ENV?: string;
   VERCEL_GIT_COMMIT_REF?: string;
