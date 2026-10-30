@@ -52,14 +52,14 @@ Signal visuel pour une nouvelle demande ; son facultatif activé par un geste ex
 | Local | 26 tests admin + 14 checkout + 33 commandes existantes | 73 réussis |
 | Local | TypeScript, build Astro/Vercel, fonction compilée publique | Réussis, commandes publiques fermées |
 | Fonction Vercel compilée | Pages admin anonymes, API anonymes, cookies, cache privé, CSRF | Réussis avec tout accès réseau interdit dans ce test |
-| Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; INFO attendues pour tables privées sans politiques publiques. Après création du compte Auth, un WARN fournisseur apparaît pour la protection contre les mots de passe compromis, désactivée |
+| Supabase Test réel | Trois migrations admin, RLS, ACL et advisors | Appliquées ; INFO attendues pour tables privées sans politiques publiques. Après création du compte Auth, un WARN fournisseur apparaît pour la protection contre les mots de passe compromis, désactivée |
 | PostgreSQL Test réel | Autorisation/non-admin, cycle complet, conflit d’état, expiration, maintien de accepted après maintenance, 4 événements d’audit et révocation immédiate | Réussis dans une transaction intégralement annulée ; identités/session purement synthétiques non persistées, aucune connexion Auth simulée présentée comme réelle |
 | Preview réel | Accès /admin sans session, formulaire de connexion et identifiants synthétiques invalides | Redirection et refus vérifiés, aucune donnée client révélée |
 | Navigateur mobile | Formulaire de connexion à 390 px | Aucun débordement horizontal |
 | Preview authentifié | Connexion réelle du premier compte, vues privées et actions depuis le navigateur | Connexion et lecture réussies ; cycle complet F-00000015 et refus F-00000016 vérifiés en base |
 | Concurrence admin réelle | Deux vues authentifiées modifient F-00000017 | Une transition enregistrée et une trace d’audit ; l’autre vue affiche le conflit. Même session Auth partagée, deux requêtes distinctes |
 | Actualisation automatique | Nouvelles demandes, compteurs et historique | Trois nouvelles demandes apparaissent sans action manuelle ; compteurs et statuts suivent les mutations |
-| Réseau interrompu | Indisponibilité puis retour du backend Preview | Reste à vérifier ; aucune coupure du réseau de l’utilisateur effectuée |
+| Indisponibilité et reprise | Backend admin Preview fermé puis rétabli | Message de données anciennes et sauvegarde désactivée, puis retour automatique à jour et bouton réactivé, sans rechargement ni reconnexion. Aucune coupure physique du réseau de l’utilisateur |
 
 La migration complémentaire `20261029092544_harden_admin_settings_concurrency.sql` rend la vérification d’expiration atomique au moment de l’UPDATE et verrouille les services avant les réglages. Le changement du délai de préparation exige aussi que les services aient leurs commandes fermées, pour éviter une course avec le checkout. Aucun changement de la RPC du checkout n’a été nécessaire.
 
@@ -106,3 +106,19 @@ Le premier enregistrement des réglages via PostgREST échouait avec SQLSTATE 21
 Après correction, depuis le vrai formulaire Preview : capacité par défaut 8 → 9, révision 0 → 1 et un événement d’audit ; capacité du créneau existant inchangée à 8. Une tentative de délai 30 → 31 est refusée avec le message métier des commandes en cours, sans incrément de révision. La capacité par défaut est ensuite rétablie à 8. Le contrôle local vérifie aussi qu’une erreur de sécurité PostgREST ferme l’opération sans révéler les détails SQL.
 
 La session créée la veille a été renouvelée automatiquement : les journaux Supabase Test retournent un appel `grant_type=refresh_token` 200 le 30 octobre vers 06:11 Europe/Paris. Aucune lecture du jeton ni nouvelle saisie du mot de passe par l’agent.
+
+## Indisponibilité réelle du backend et reprise
+
+Le 30 octobre, FORNO_ADMIN_ENABLED est mis temporairement à false uniquement en Preview / codex/test-commandes, puis le commit b726af7 est déployé : dpl_8MtVWqvjkdDjFBWL34QhCPi1vHkb. L’onglet Réglages déjà ouvert reçoit le refus 503 via son polling : message « Connexion interrompue. Les données affichées peuvent être anciennes » et bouton Enregistrer désactivé, vérifié dans le DOM.
+
+Le même flag Preview est remis à true et un déploiement Preview du même commit est créé, sans cible Production : dpl_6C2LheLixWXuRhcL2hQp5ssUs3sd. Le même onglet, sans navigation ni rechargement, revient automatiquement à « À jour » et le bouton est réactivé. La session reste valide. Le flag d’ouverture des commandes publiques n’est jamais activé.
+
+Ce scénario teste une indisponibilité du backend, avec le même chemin de fermeture des actions qu’une erreur réseau. Il ne constitue pas un test de coupure Wi-Fi/4G réelle. Le son facultatif dépend de l’autorisation du navigateur ; aucun test d’audibilité matérielle ni de notifications push n’est revendiqué.
+
+Contrôle final Test : 13 pizzas, 16 commandes synthétiques conservées, aucune pending encore valable, un utilisateur Auth et un administrateur autorisé ; les journaux d’audit ne contiennent ni champs client ni numéros de téléphone. Les deux crons Test restent en pause. Les valeurs de réglages sont rétablies à 30 minutes / 8 pizzas / 15 minutes, révision 2, avec deux événements d’audit de réglages.
+
+Mobile : les vues Commandes, Planning et Réglages sont mesurées à 390 px sans débordement. Le dialog de confirmation est lisible ; Échap annule sans mutation et ramène le focus au bouton déclencheur. Les captures de test sont conservées hors dépôt.
+
+Déconnexion réelle vérifiée en fin d’essai : le bouton revient au formulaire de connexion, Supabase Test ne conserve aucune session admin active et l’API `/api/admin/orders` retourne `UNAUTHORIZED`. Une navigation sur `/admin/` redirige à nouveau vers `/admin/login/`. Le compte reste autorisé, mais l’utilisateur devra se reconnecter ; le mot de passe n’a jamais été lu ni transmis au chat.
+
+Livraison limitée à la branche `codex/test-commandes` et au Preview protégé. Production : zéro commande, zéro service autorisant les commandes, cron en pause, aucune table admin appliquée. Aucune promotion sur main et aucune modification des pages publiques.
