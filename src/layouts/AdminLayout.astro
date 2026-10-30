@@ -2,11 +2,14 @@
 import '../styles/global.css';
 import {adminConfig} from '../config/admin.config';
 import {pushConfig} from '../config/push.config';
+import {clearPushCookie} from '../server/push/schema';
 import {siteConfig} from '../config/site.config';
 import {csrfToken} from '../server/admin/session';
 interface Props {title:string;login?:boolean;}
 const {title,login=false}=Astro.props;
 const csrf=csrfToken(Astro.cookies);
+const clearPush=login&&Astro.cookies.get(clearPushCookie)?.value==='1';
+if(clearPush)Astro.cookies.delete(clearPushCookie,{path:'/',secure:true});
 ---
 <!doctype html>
 <html lang="fr">
@@ -16,7 +19,7 @@ const csrf=csrfToken(Astro.cookies);
   <link rel="manifest" href={pushConfig.manifest}/><link rel="apple-touch-icon" href={pushConfig.icons.apple}/><meta name="theme-color" content={siteConfig.themeColor}/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content={pushConfig.shortName}/>
   <title>{title} · {adminConfig.brand}</title>
  </head>
- <body data-admin-authenticated={login?'false':'true'} class="bg-background font-[family-name:var(--font-body)] text-text">
+ <body data-clear-push={clearPush?'true':'false'} data-admin-authenticated={login?'false':'true'} class="bg-background font-[family-name:var(--font-body)] text-text">
   <a href="#admin-main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-surface focus:p-3">Aller au contenu</a>
   <header class="border-b border-border bg-surface pt-[env(safe-area-inset-top)]">
    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">

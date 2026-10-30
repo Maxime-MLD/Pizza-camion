@@ -11,6 +11,7 @@ const message=error==='RATE_LIMITED'?adminConfig.errors.RATE_LIMITED:error==='CS
   <p class="text-xs font-bold tracking-widest text-primary-dark uppercase">Au service du pizzaiolo</p>
   <h1 id="login-title" class="mt-3 font-[family-name:var(--font-display)] text-5xl font-extrabold uppercase">Votre poste<br/>de commande.</h1>
   <p class="mt-4 text-sm text-muted-foreground">Connectez-vous avec votre compte autorisé pour gérer le service.</p>
+  {Astro.url.searchParams.get('push')==='review'&&<p role="status" class="mt-5 rounded-lg border border-border p-3 text-sm">La session est fermée. Le retrait de l’appareil côté serveur n’a pas pu être confirmé. Après reconnexion, vérifiez vos appareils dans Réglages.</p>}
   {message&&<p role="alert" class="mt-5 rounded-lg border border-primary-dark bg-primary-light p-3 text-sm text-text">{message}</p>}
   <form method="post" action="/api/admin/login" class="mt-6 grid gap-5">
    <input type="hidden" name="csrf" value={csrfToken(Astro.cookies)}/>

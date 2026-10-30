@@ -8,7 +8,7 @@ Manifest distinct `/admin/manifest.webmanifest`, id/scope/start_url `/admin/`, d
 
 Service Worker `/admin/sw.js`, scope `/admin/`. Cache autorisé uniquement : guide statique `/admin/offline/` vérifié par marqueur, ses CSS et icônes. Navigations privées réseau uniquement ; échec réseau → guide, jamais un ancien tableau de commandes. APIs/Auth non interceptées, aucun token ni commande dans CacheStorage/IndexedDB/localStorage. Une page de protection Vercel ne passe pas la vérification du guide. La mise à jour d’un worker existant attend un clic explicite ; pas de rechargement pendant une saisie.
 
-Abonnement depuis un geste explicite, derrière session admin vérifiée + CSRF existant. Endpoints et clés restent dans le schéma privé avec RLS et sans permissions browser/service_role directes. RPC `forno_push_admin` service_role uniquement, identité/session vérifiées en base, appareils limités au propriétaire, maximum 10 actifs ; test limité à 1/min/appareil. Cookie appareil opaque, Secure HttpOnly SameSite=Lax. Retrait, déconnexion et révocation admin effacent immédiatement endpoint/clés et annulent les envois en attente. Une livraison déjà acceptée par Apple/Google ne peut pas être rappelée.
+Abonnement depuis un geste explicite, derrière session admin vérifiée + CSRF existant. Endpoints et clés restent dans le schéma privé avec RLS et sans permissions browser/service_role directes. RPC `forno_push_admin` service_role uniquement, identité/session vérifiées en base, appareils limités au propriétaire, maximum 10 actifs ; test limité à 1/min/appareil. Cookie appareil opaque, Secure HttpOnly SameSite=Lax. Une panne Push ne bloque jamais la déconnexion Auth : signal HttpOnly ponctuel pour désabonner le navigateur, avertissement de vérification si le retrait serveur n’est pas confirmé. Trois tests couvrent succès, panne Push et jeton Auth expiré. Retrait, déconnexion et révocation admin effacent immédiatement endpoint/clés et annulent les envois en attente. Une livraison déjà acceptée par Apple/Google ne peut pas être rappelée.
 
 Trigger INSERT pending → événement outbox dans la transaction de commande. Unicité commande/événement et événement/appareil. Aucun envoi avant commit. Worker Edge `forno-push-worker`, `npm:web-push@3.6.7` et dépendances verrouillées par deno.lock, vraie encryption Web Push/VAPID. La désactivation de la vérification JWT de la passerelle est remplacée par un jeton dédié de 256 bits et des RPC service_role qui vérifient son hash. Aucun contenu d’envoi libre fourni par l’appelant, aucun CORS.
 
@@ -41,9 +41,13 @@ La migration complémentaire recrée uniquement l’extension nouvellement insta
 
 ## Validation
 
-Local : 73 tests existants + 32 tests Push/PWA. Ils comprennent PostgreSQL PGlite, BFF session/CSRF et Service Worker dans VM ; ce sont des tests simulés, pas une réception sur téléphone. TypeScript Astro et Deno strict, build Astro/Vercel.
+Local : 73 tests existants + 35 tests Push/PWA. Ils comprennent PostgreSQL PGlite, BFF session/CSRF et Service Worker dans VM ; ce sont des tests simulés, pas une réception sur téléphone. TypeScript Astro et Deno strict, build Astro/Vercel.
 
 Test cloud : migrations appliquées, RLS/ACL des nouvelles tables et RPC vérifiés ; worker authentifié appelé via pg_net → HTTP 200 et VAPID prête. POST non authentifié → 401. `supabase/tests/push-transaction.sql` exécuté sur le vrai PostgreSQL Test : outbox atomique, double claim refusé, retry, lease fencing, 410 et effacement des clés validés ; transaction entièrement annulée, aucune requête vers un fournisseur Push issue de ces fixtures.
+
+Concurrence PostgreSQL réelle : `supabase/tests/push-concurrency.sql`, deux connexions (MCP et pg_cron). Le second worker attend 10,08 s sur le verrou du premier, puis reçoit null. Une seule livraison, une seule tentative, appareil synthétique révoqué et aucun envoi fournisseur. Le job ponctuel reste en pause ; le scheduler Push est rétabli actif.
+
+Preview protégé du commit `4822077` : déploiement `dpl_HGNqXRW21kf1FtpHcJzrKLZXdgwq`, READY, target=null, alias stable. Navigateur réel : manifest reçu avec id/scope/start_url /admin/, mode standalone et trois icônes ; guide hors ligne rendu à 390 px, scrollWidth=clientWidth=390 ; API Push sans session affiche UNAUTHORIZED. Le connecteur HTTP Vercel ne parvient pas à résoudre le déploiement, même via son URL unique ; le fallback CLI dispose d’une connexion expirée. La protection n’est pas modifiée. Ces limites de l’outil n’empêchent pas la navigation dans le Preview authentifié Vercel.
 
 Réception matérielle : EN ATTENTE. Le propriétaire dispose d’iPhone et Android. Aucun succès SQL, HTTP 201 d’un fournisseur ou test dans une VM ne vaut preuve de réception sur ces appareils.
 
@@ -52,7 +56,7 @@ Réception matérielle : EN ATTENTE. Le propriétaire dispose d’iPhone et Andr
 1. Ouvrir le Preview stable protégé dans Safari iPhone / Chrome Android, s’authentifier à Vercel si demandé puis au dashboard avec le compte Test habituel. Aucun mot de passe à transmettre.
 2. Installer depuis `/admin/` (iPhone iOS16.4+ : Partager → écran d’accueil). Ouvrir l’icône, vérifier connexion/navigation et session persistante. La protection Vercel peut nécessiter une nouvelle connexion dans le stockage de l’application installée ; ne pas la désactiver.
 3. Réglages : nommer chaque appareil, Activer, autoriser explicitement, Envoyer une notification test. Confirmer séparément iPhone/Android, application au premier plan puis en arrière-plan, clic vers commandes.
-4. Après les deux abonnements, créer une demande synthétique Test via la RPC métier avec service refermé avant commit et verrou global toujours faux. Vérifier notification réelle sur chaque téléphone et aucun champ client, référence/compteur dans le dashboard.
+4. Après les deux abonnements, exécuter `supabase/tests/push-new-order.sql` pour créer une demande synthétique Test via la RPC métier avec service refermé avant commit et verrou global toujours faux. Vérifier notification réelle sur chaque téléphone et aucun champ client, référence/compteur dans le dashboard.
 5. Retirer un appareil depuis l’autre, vérifier l’absence d’envoi suivant. Réabonner, désactiver localement, vérifier le fournisseur/OS. Tester hors connexion et retour réseau, mise à jour, expiration session et révocation admin avec fixtures isolées.
 
 ## Limites, conservation et coûts

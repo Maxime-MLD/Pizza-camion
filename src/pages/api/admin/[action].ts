@@ -5,7 +5,7 @@ import {adminChangeSchema,loginSchema} from '../../../server/admin/schema';
 import {clearSession,cookieNames,validCsrf,validateAccess,writeTokens} from '../../../server/admin/session';
 import {boundedBody} from '../../../server/admin/requestBody';
 import {getPushEnvironment,pushEnabled} from '../../../server/push/environment';
-import {pushCookie} from '../../../server/push/schema';
+import {pushCookie,clearPushCookie} from '../../../server/push/schema';
 export const prerender=false;
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 export const ALL:APIRoute=async(context)=>{
@@ -40,7 +40,7 @@ export const ALL:APIRoute=async(context)=>{
    writeTokens(cookies,tokens);cookies.delete(cookieNames.csrf,{path:'/',secure:true});return context.redirect('/admin/',303);
   }
   if(action==='logout'){
-   let token=cookies.get(cookieNames.access)?.value;
+   let token=cookies.get(cookieNames.access)?.value;let pushReview=false;
    const refresh=cookies.get(cookieNames.refresh)?.value;
    if(refresh){
     const renewed=await authFetch(env,'token?grant_type=refresh_token','POST',{refresh_token:refresh});
@@ -49,10 +49,12 @@ export const ALL:APIRoute=async(context)=>{
    }
    if(token&&cookies.get(pushCookie)?.value&&pushEnabled(getPushEnvironment())){
     try{const identity=await validateAccess(env,token);await adminRpc(env,'forno_push_admin',{p_actor:identity.userId,p_session:identity.sessionId,p_action:'revoke',p_data:{deviceId:cookies.get(pushCookie)!.value}});}
-    catch(error){if(!(error instanceof AdminError)||!['ADMIN_FORBIDDEN','PUSH_FORBIDDEN'].includes(error.code))throw error;}
+    catch(error){pushReview=!(error instanceof AdminError)||!['ADMIN_FORBIDDEN','PUSH_FORBIDDEN'].includes(error.code);}
    }
    if(token){const response=await authFetch(env,'logout?scope=local','POST',undefined,token);if(!response.ok&&response.status!==401)throw new AdminError('UNAVAILABLE');}
-   cookies.delete(pushCookie,{path:'/',secure:true});clearSession(cookies);return context.redirect('/admin/login/',303);
+   // Optional Push failure must never prevent the existing Auth sign-out.
+   cookies.set(clearPushCookie,'1',{path:'/',secure:true,httpOnly:true,sameSite:'lax',maxAge:60});
+   cookies.delete(pushCookie,{path:'/',secure:true});clearSession(cookies);return context.redirect(pushReview?'/admin/login/?push=review':'/admin/login/',303);
   }
   if(action!=='change')throw new AdminError('ADMIN_NOT_FOUND',404);
   if(!locals.admin)throw new AdminError('UNAUTHORIZED',401);

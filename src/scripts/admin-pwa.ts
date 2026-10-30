@@ -29,4 +29,7 @@ if(location.pathname.startsWith(pushConfig.scope)){
  }).catch(()=>{const status=document.querySelector<HTMLElement>('[data-pwa-status]');if(status)status.textContent='Installation non disponible dans ce navigateur. Le dashboard en ligne reste accessible.';});
  navigator.serviceWorker?.addEventListener('controllerchange',()=>{if(reloadForUpdate)location.reload();});
  if(document.body.dataset.adminAuthenticated==='false')void updateAppBadge(0);
+ // One-time HttpOnly server signal set only after a CSRF-verified sign-out.
+ // This also retires the browser subscription if the optional Push RPC was unavailable.
+ if(document.body.dataset.clearPush==='true')void adminRegistration().then(async reg=>{await(await reg.pushManager.getSubscription())?.unsubscribe();}).catch(()=>{const status=document.querySelector<HTMLElement>('[data-pwa-status]');if(status)status.textContent='Vérifiez le retrait de cet appareil dans vos réglages de notifications après reconnexion.';});
 }

@@ -6,3 +6,4 @@ export const pushRequestSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('test'),deviceId:z.uuid()}).strict(),
 ]);
 export const pushCookie='__Host-forno-push-device';
+export const clearPushCookie='__Host-forno-clear-push';

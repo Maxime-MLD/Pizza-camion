@@ -105,3 +105,15 @@ test('Push BFF denies missing session and forged CSRF before any privileged RPC'
   (context.locals as Record<string,unknown>).admin={userId:actor,sessionId:session};response=await ALL(context as never);assert.equal(response.status,403);assert.deepEqual(await response.json(),{error:'CSRF'});
  }finally{for(const [key,value]of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 });
+
+for(const mode of ['success','push-outage','expired-token'] as const)test(`Logout preserves Auth sign-out and safely retires Push: ${mode}`,async()=>{
+ const {ALL}=await import('../src/pages/api/admin/[action]');const {cookieNames}=await import('../src/server/admin/session');const {pushCookie,clearPushCookie}=await import('../src/server/push/schema');
+ const values={FORNO_PUSH_ENABLED:'true',FORNO_ADMIN_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'x'.repeat(32)};
+ const previous=Object.fromEntries(Object.keys(values).map(k=>[k,process.env[k]]));Object.assign(process.env,values);const original=globalThis.fetch;const calls:string[]=[];
+ const jar:Record<string,string>={[cookieNames.access]:`header.${btoa(JSON.stringify({sub:actor,session_id:session}))}.synthetic`,[cookieNames.csrf]:'nonce',[pushCookie]:actor};
+ globalThis.fetch=async(input)=>{const url=String(input);calls.push(url);if(url.endsWith('/user'))return mode==='expired-token'?new Response(null,{status:401}):Response.json({id:actor});if(url.endsWith('forno_admin_session'))return Response.json(true);if(url.endsWith('forno_push_admin'))return mode==='push-outage'?new Response(null,{status:503}):Response.json({ok:true});if(url.includes('logout?scope=local'))return new Response(null,{status:mode==='expired-token'?401:204});throw Error('UNEXPECTED_NETWORK');};
+ try{
+  const origin='https://pizza-git-codex-test-commandes-maxime-mlds-projects.vercel.app';const context={request:new Request(origin+'/api/admin/logout',{method:'POST',headers:{Origin:origin,'Content-Type':'application/x-www-form-urlencoded'},body:'csrf=nonce'}),params:{action:'logout'},locals:{},cookies:{get:(k:string)=>jar[k]?{value:jar[k]}:undefined,set:(k:string,v:string)=>{jar[k]=v;},delete:(k:string)=>{delete jar[k];}},redirect:(url:string,status:number)=>new Response(null,{status,headers:{Location:url}})};
+  const response=await ALL(context as never);assert.equal(response.status,303);assert.ok(calls.some(c=>c.includes('logout?scope=local')));assert.equal(jar[cookieNames.access],undefined);assert.equal(jar[pushCookie],undefined);assert.equal(jar[clearPushCookie],'1');assert.equal(response.headers.get('location'),mode==='success'?'/admin/login/':'/admin/login/?push=review');
+ }finally{globalThis.fetch=original;for(const [key,value]of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
+});
