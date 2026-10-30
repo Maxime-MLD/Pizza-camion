@@ -71,7 +71,7 @@ Vérifier la fonction compilée avec `node scripts/verify-admin-build.mjs`. Exé
 
 ## Avant Production
 
-Migration et autorisation d’un compte réel à approuver séparément. Valider l’authentification réelle, les parcours mobile/desktop et les transitions sur Preview, les pertes réseau, les mises à jour automatiques et la concurrence PostgreSQL réelle. Définir les conditions opérationnelles, la confidentialité et la conservation des journaux d’audit. Conserver commandes publiques et cron Production fermés jusqu’à validation explicite.
+Les parcours Preview validés sont décrits ci-dessus. Restent avant Production : approbation puis application des trois migrations et création/autorisation explicite du compte Production ; validation sur les terminaux du camion, notamment réseau Wi-Fi/4G réel et son facultatif ; décision sur l’avertissement des mots de passe compromis ; conditions opérationnelles, confidentialité et conservation de l’audit. L’ouverture du circuit public reste aussi soumise à la validation du vrai widget Turnstile et à l’accord explicite du propriétaire. Conserver commandes publiques et cron Production fermés jusque-là.
 
 ## Compte Test et avertissement Auth
 
@@ -122,3 +122,12 @@ Mobile : les vues Commandes, Planning et Réglages sont mesurées à 390 px sans
 Déconnexion réelle vérifiée en fin d’essai : le bouton revient au formulaire de connexion, Supabase Test ne conserve aucune session admin active et l’API `/api/admin/orders` retourne `UNAUTHORIZED`. Une navigation sur `/admin/` redirige à nouveau vers `/admin/login/`. Le compte reste autorisé, mais l’utilisateur devra se reconnecter ; le mot de passe n’a jamais été lu ni transmis au chat.
 
 Livraison limitée à la branche `codex/test-commandes` et au Preview protégé. Production : zéro commande, zéro service autorisant les commandes, cron en pause, aucune table admin appliquée. Aucune promotion sur main et aucune modification des pages publiques.
+
+## Fichiers de cette étape
+
+- Routes : `src/pages/admin/{index,login,planning,reglages}.astro` et `src/pages/api/admin/[action].ts`.
+- Interface : `src/layouts/AdminLayout.astro`, `src/components/admin/AdminDashboard.astro`, `src/scripts/admin-dashboard.ts`, `src/config/admin.config.ts`.
+- Sécurité et types : `src/middleware.ts`, `src/server/admin/{client,environment,schema,session}.ts`, `src/types/admin.ts`, `src/env.d.ts`.
+- Migrations : `20261029091206_forno_private_admin.sql`, `20261029092544_harden_admin_settings_concurrency.sql`, `20261030051016_fix_admin_singleton_update.sql` ; bootstrap séparé `supabase/seeds/admin-test.sql`.
+- Vérification : `tests/admin.test.ts`, `scripts/test-admin.mjs`, `scripts/verify-admin-build.mjs` et ce rapport.
+- Configuration modifiée : `.env.example` (flag désactivé par défaut), `package.json` (commande de test), `astro.config.mjs` (exclusion du sitemap). Aucune nouvelle dépendance.
