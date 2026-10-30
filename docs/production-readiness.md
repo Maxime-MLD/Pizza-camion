@@ -1,5 +1,7 @@
 # FORNO — Préparation Production, 30 octobre 2026
 
+> Instantané historique de l'étape 14. Les migrations sont désormais appliquées et le propriétaire a été autorisé séparément. Pour l'état courant et la candidature de déploiement fermé, consulter [l'étape 16](production-dashboard-deploy.md) et [le compte rendu SQL](production-migrations-applied.md).
+
 ## Décision actuelle
 
 **Version préparée pour revue, commandes publiques fermées. La mise en service n'est pas validée.**
