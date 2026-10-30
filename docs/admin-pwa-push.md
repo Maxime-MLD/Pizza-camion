@@ -49,7 +49,7 @@ Concurrence PostgreSQL réelle : `supabase/tests/push-concurrency.sql`, deux con
 
 Preview protégé du commit `4822077` : déploiement `dpl_HGNqXRW21kf1FtpHcJzrKLZXdgwq`, READY, target=null, alias stable. Navigateur réel : manifest reçu avec id/scope/start_url /admin/, mode standalone et trois icônes ; guide hors ligne rendu à 390 px, scrollWidth=clientWidth=390 ; API Push sans session affiche UNAUTHORIZED. Le connecteur HTTP Vercel ne parvient pas à résoudre le déploiement, même via son URL unique ; le fallback CLI dispose d’une connexion expirée. La protection n’est pas modifiée. Ces limites de l’outil n’empêchent pas la navigation dans le Preview authentifié Vercel.
 
-Réception matérielle : le propriétaire confirme la réception de la notification test sur iPhone. Android est indisponible pour le moment, validation différée. La réception d’une nouvelle commande, l’arrière-plan et le clic restent à confirmer. Aucun succès SQL, HTTP 201 d’un fournisseur ou test dans une VM ne vaut preuve de réception sur un appareil.
+Réception matérielle : le propriétaire confirme la réception de la notification test sur iPhone. Android est indisponible pour le moment, validation différée. La réception d’une nouvelle commande en arrière-plan et le clic vers le dashboard sont également confirmés sur iPhone (voir le résultat détaillé ci-dessous). Aucun succès SQL, HTTP 201 d’un fournisseur ou test dans une VM ne vaut preuve de réception sur un appareil.
 
 ## Essais matériels obligatoires
 
@@ -79,6 +79,11 @@ Contrôle Production en lecture seule : déploiement inchangé `dpl_2Vx6t2KCcLZD
 
 Autres contrôles finaux : révocation de l’administrateur avec le vrai abonnement Apple dans une transaction annulée → endpoint/clés effacés et appareil inactif à l’intérieur de la transaction ; rollback → abonnement réel préservé. Cron Push propriétaire postgres, fréquence minute, trois dernières exécutions succeeded, file pg_net vide. Les crons de maintenance et de concurrence sont toujours en pause.
 
-À la fin de cette passe, la création de la nouvelle commande physique attend le signal « iPhone en arrière-plan, prêt » demandé au propriétaire. Le script est prêt et vérifié localement mais n’a pas été exécuté sur Test ; les 16 commandes synthétiques précédentes sont conservées. L’essai Android est explicitement différé par le propriétaire. Restent aussi le clic depuis une notification, le retrait/réabonnement matériel et le hors-ligne réel sur les téléphones ; la page statique et la logique de cache ont été vérifiées séparément.
+Le 30 octobre à 08 h 10 Europe/Paris, après le signal du propriétaire confirmant l’iPhone en arrière-plan, `supabase/tests/push-new-order.sql` a été exécuté uniquement dans Test. Commande F-00000019 créée par la RPC métier : trois pizzas (1 Capri, 2 Maestro), 3 200 centimes recalculés, retrait 18 h, statut pending. Les lignes enregistrées totalisent aussi trois pizzas et 3 200 centimes. Un seul événement outbox, une livraison, une tentative ; Apple répond 201 à 07:10:14 UTC. Le service du jour est refermé avant commit, sans exposition publique temporaire. La base compte désormais 17 commandes synthétiques ; aucune commande Production créée.
+
+Le propriétaire confirme explicitement : notification reçue sur l’iPhone en arrière-plan, appui sur l’alerte et ouverture correcte de FORNO. Admin avec la demande en attente. Ce résultat valide la chaîne réelle nouvelle commande PostgreSQL → outbox → pg_net → Edge/VAPID → Apple → Service Worker → notification système → dashboard privé. Il ne constitue pas un nouveau test du checkout navigateur/Turnstile : la commande synthétique passe par la RPC métier native, aucun endpoint de contournement n’a été ajouté.
+
+L’essai Android reste différé par le propriétaire. Le retrait/réabonnement matériel est en cours de vérification ; le hors-ligne réel sur téléphone reste à tester. La page statique et la logique de cache ont été vérifiées séparément. La commande Test conserve son expiration normale de quinze minutes, sans activation du cron de maintenance ni suppression de données.
+
 
 Capture du guide servi par le Preview à 390 px, conservée hors dépôt : `/tmp/forno-pwa-offline-full.jpg`. La visualisation directe du guide ne constitue pas à elle seule un test de coupure réseau matérielle. Le contrôle VM vérifie le fallback et l’absence de cache des routes privées.
