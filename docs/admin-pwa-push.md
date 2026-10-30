@@ -41,7 +41,7 @@ La migration complémentaire recrée uniquement l’extension nouvellement insta
 
 ## Validation
 
-Local : 73 tests existants + 35 tests Push/PWA. Ils comprennent PostgreSQL PGlite, BFF session/CSRF et Service Worker dans VM ; ce sont des tests simulés, pas une réception sur téléphone. TypeScript Astro et Deno strict, build Astro/Vercel.
+Local : 73 tests existants + 36 tests Push/PWA. Ils comprennent PostgreSQL PGlite, BFF session/CSRF et Service Worker dans VM ; ce sont des tests simulés, pas une réception sur téléphone. TypeScript Astro et Deno strict, build Astro/Vercel.
 
 Test cloud : migrations appliquées, RLS/ACL des nouvelles tables et RPC vérifiés ; worker authentifié appelé via pg_net → HTTP 200 et VAPID prête. POST non authentifié → 401. `supabase/tests/push-transaction.sql` exécuté sur le vrai PostgreSQL Test : outbox atomique, double claim refusé, retry, lease fencing, 410 et effacement des clés validés ; transaction entièrement annulée, aucune requête vers un fournisseur Push issue de ces fixtures.
 

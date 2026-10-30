@@ -16,17 +16,18 @@ before(async()=>{
  insert into auth.users values('${actor}'),('${other}');insert into auth.sessions values('${session}','${actor}',null),('${otherSession}','${other}',null);
  create function public.forno_test_now() returns timestamptz language sql stable as $$select coalesce(nullif(current_setting('forno.test_now',true),''),'2026-10-30T10:00:00Z')::timestamptz$$;`);
  for(const file of files)await db.exec((await readFile(`supabase/migrations/${file}`,'utf8')).replace(/\b(clock_timestamp|now)\(\)/g,'public.forno_test_now()'));
+ await db.exec(await readFile('supabase/tests/preview-marker.sql','utf8'));
  await db.exec(`insert into forno_private.admin_users(user_id) values('${actor}'),('${other}');
  update forno_private.push_config set enabled=true,worker_hash=sha256(convert_to('${token}','UTF8')),vapid_public_key=repeat('A',87) where singleton;
- insert into public.services(id,service_date,village,opening_time,closing_time,status,orders_enabled) values('s','2026-10-30','Test','00:00','23:59','open',false);
- insert into public.pickup_slots values('slot','s','20:00',10,true);`);
+ insert into public.services(id,service_date,village,opening_time,closing_time,status,orders_enabled) values('forno-test-s','2026-10-30','Test','00:00','23:59','open',false);
+ insert into public.pickup_slots values('slot','forno-test-s','20:00',10,true);`);
 });
 after(()=>db.close());
 async function tx(run:()=>Promise<void>){await db.exec('begin');try{await run();}finally{await db.exec('rollback');}}
 async function admin<T=Record<string,unknown>>(action:string,data:unknown={},who=actor,sid=session){return (await db.query<{v:T}>('select public.forno_push_admin($1::uuid,$2::uuid,$3,$4::jsonb) v',[who,sid,action,JSON.stringify(data)])).rows[0]!.v;}
 async function worker<T=PushBatch|null>(action:string,data:unknown={},secret=token){return (await db.query<{v:T}>('select public.forno_push_worker($1,$2,$3::jsonb) v',[secret,action,JSON.stringify(data)])).rows[0]!.v;}
 async function subscribe(suffix='1',who=actor,sid=session){return (await admin<{deviceId:string}>('subscribe',{endpoint:`https://fcm.googleapis.com/fcm/send/TEST_ONLY_${suffix}`,p256dh:'A'.repeat(87),auth:'A'.repeat(22),label:'Test device'},who,sid)).deviceId;}
-async function order(){return (await db.query<{id:string}>(`insert into public.orders(service_id,pickup_slot_id,customer_first_name,customer_last_name,customer_phone,customer_note,total_cents,pizza_count,idempotency_key,pending_expires_at,status) values('s','slot','Private','Customer','+33600000000','NEVER_PUSH_THIS',2000,2,gen_random_uuid(),'2026-10-30T10:15Z','pending') returning id`)).rows[0]!.id;}
+async function order(){return (await db.query<{id:string}>(`insert into public.orders(service_id,pickup_slot_id,customer_first_name,customer_last_name,customer_phone,customer_note,total_cents,pizza_count,idempotency_key,pending_expires_at,status) values('forno-test-s','slot','Private','Customer','+33600000000','NEVER_PUSH_THIS',2000,2,gen_random_uuid(),'2026-10-30T10:15Z','pending') returning id`)).rows[0]!.id;}
 const count=async(table:string)=>(await db.query<{n:number}>(`select count(*)::int n from forno_private.${table}`)).rows[0]!.n;
 const finish=(b:PushBatch,status:number)=>worker('finish',{deviceId:b.device.id,lease:b.lease,status});
 
@@ -117,3 +118,14 @@ for(const mode of ['success','push-outage','expired-token'] as const)test(`Logou
   const response=await ALL(context as never);assert.equal(response.status,303);assert.ok(calls.some(c=>c.includes('logout?scope=local')));assert.equal(jar[cookieNames.access],undefined);assert.equal(jar[pushCookie],undefined);assert.equal(jar[clearPushCookie],'1');assert.equal(response.headers.get('location'),mode==='success'?'/admin/login/':'/admin/login/?push=review');
  }finally{globalThis.fetch=original;for(const [key,value]of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 });
+
+
+test('Prepared physical-order fixture uses the real order RPC, restores closure and records one outbox event',()=>tx(async()=>{
+ await subscribe('phone1');await subscribe('phone2');
+ const sql=(await readFile('supabase/tests/push-new-order.sql','utf8')).replace(/^begin;|^commit;/gm,'').replace(/\b(clock_timestamp|now)\(\)/g,'public.forno_test_now()');
+ await db.exec(sql);assert.equal(await count('push_events'),1);
+ assert.equal((await db.query<{n:number}>('select count(*)::int n from public.orders')).rows[0]!.n,1);
+ const order=(await db.query<{pizza_count:number;total_cents:number}>('select pizza_count,total_cents from public.orders')).rows[0]!;assert.equal(order.pizza_count,3);assert.equal(order.total_cents,3200);
+ assert.equal((await db.query<{enabled:boolean}>("select orders_enabled enabled from public.services where id='forno-test-s'")).rows[0]!.enabled,false);
+ assert.equal((await worker('claim'))!.events.length,1);
+}));

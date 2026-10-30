@@ -11,10 +11,10 @@ begin
  select * into strict s from public.services where service_date=(clock_timestamp() at time zone 'Europe/Paris')::date and id like 'forno-test-%' for update;
  if s.orders_enabled then raise exception 'TEST_SERVICE_MUST_BE_CLOSED'; end if;
  update public.services set status='open',orders_enabled=true where id=s.id;
- select x->>'id' into slot_id from jsonb_array_elements(public.forno_pickup_slots(3)->'slots') x where x->>'state'='available' order by x->>'pickupTime' limit 1;
+ select x->>'id' into slot_id from jsonb_array_elements(public.forno_pickup_slots(3)->'slots') x where x->>'state'='available' order by x->>'label' limit 1;
  if slot_id is null then raise exception 'NO_CURRENT_TEST_SLOT'; end if;
  payload=jsonb_build_object('idempotencyKey',gen_random_uuid(),'serviceId',s.id,'slotId',slot_id,'date',s.service_date::text,'village',s.village,'lines',jsonb_build_array(jsonb_build_object('pizzaId','capri','quantity',1),jsonb_build_object('pizzaId','maestro','quantity',2)),'customer',jsonb_build_object('firstName','Test','lastName','Push','phone','+33600000000','comment','FORNO_PUSH_PHYSICAL_TEST','privacyAcknowledged',true));
- receipt=public.forno_create_order(payload,encode(extensions.gen_random_bytes(32),'hex'),encode(extensions.gen_random_bytes(32),'hex'));
+ receipt=public.forno_create_order(payload,encode(sha256(convert_to(gen_random_uuid()::text,'UTF8')),'hex'),encode(sha256(convert_to(gen_random_uuid()::text,'UTF8')),'hex'));
  update public.services set status=s.status,orders_enabled=s.orders_enabled where id=s.id;
  update forno_private.test_environment set fixtures=fixtures||jsonb_build_object('_pushPhysicalOrder',receipt->>'orderNumber') where project_ref='brzcvncsycdpsrvulqss';
 end $$;
