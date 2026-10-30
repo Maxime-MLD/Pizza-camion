@@ -6,6 +6,7 @@ import type {AstroCookies} from 'astro';
 import {getIdentity,validateAccess,validCsrf,cookieNames,writeTokens} from '../src/server/admin/session';
 import {adminConfigured,mayOpenTest,type AdminEnvironment} from '../src/server/admin/environment';
 import {adminChangeSchema} from '../src/server/admin/schema';
+import {adminRpc} from '../src/server/admin/client';
 const actor='a0000000-0000-4000-8000-000000000001',session='a0000000-0000-4000-8000-000000000002';
 const other='a0000000-0000-4000-8000-000000000003',otherSession='a0000000-0000-4000-8000-000000000004';
 const env:AdminEnvironment={FORNO_ADMIN_ENABLED:'true',VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'codex/test-commandes',SUPABASE_URL:'https://brzcvncsycdpsrvulqss.supabase.co',SUPABASE_SECRET_KEY:'TEST_ONLY_NOT_A_KEY',ORDER_RATE_LIMIT_SALT:'s'.repeat(32)};
@@ -17,7 +18,7 @@ before(async()=>{
  create table auth.users(id uuid primary key);create table auth.sessions(id uuid primary key,user_id uuid references auth.users,not_after timestamptz);
  insert into auth.users values('${actor}'),('${other}');insert into auth.sessions values('${session}','${actor}',null),('${otherSession}','${other}',null);
  create function public.forno_test_now() returns timestamptz language sql stable as $$select '2026-10-29T10:00:00Z'::timestamptz$$;`);
- for(const file of ['202610280001_orders.sql','202610280002_catalogue.sql','20261028095508_harden_forno_data_api.sql','20261029091206_forno_private_admin.sql','20261029092544_harden_admin_settings_concurrency.sql'])await db.exec((await readFile(`supabase/migrations/${file}`,'utf8')).replace(/\b(clock_timestamp|now)\(\)/g,'public.forno_test_now()'));
+ for(const file of ['202610280001_orders.sql','202610280002_catalogue.sql','20261028095508_harden_forno_data_api.sql','20261029091206_forno_private_admin.sql','20261029092544_harden_admin_settings_concurrency.sql','20261030051016_fix_admin_singleton_update.sql'])await db.exec((await readFile(`supabase/migrations/${file}`,'utf8')).replace(/\b(clock_timestamp|now)\(\)/g,'public.forno_test_now()'));
  await db.exec(await readFile('supabase/tests/preview-marker.sql','utf8'));
  await db.exec(`insert into forno_private.admin_users(user_id) values('${actor}');
  insert into public.services(id,service_date,village,opening_time,closing_time,status,orders_enabled) values('s','2026-10-29','Test','00:00','23:59','open',true),('future','2026-10-30','Test demain','18:00','22:00','scheduled',false);
@@ -43,6 +44,9 @@ test('Verified admin is accepted and metadata cannot choose identity',async()=>{
 test('Expired token refreshes on server before authorization and rotates cookies',async()=>{const c=cookies({[cookieNames.access]:'expired',[cookieNames.refresh]:'refresh-test'});let reads=0;await getIdentity(env,c.api,async input=>{if(String(input).includes('grant_type=refresh_token'))return Response.json({access_token:jwt(),refresh_token:'new-refresh'});if(String(input).endsWith('/user'))return ++reads===1?new Response(null,{status:401}):Response.json({id:actor});return Response.json(true);});assert.equal(c.values[cookieNames.refresh],'new-refresh');});
 test('Server outage preserves session cookies and fails closed',async()=>{const c=cookies({[cookieNames.access]:jwt()});await assert.rejects(getIdentity(env,c.api,async()=>new Response(null,{status:503})),/UNAVAILABLE/);assert.equal(c.values[cookieNames.access],jwt());});
 test('Input schema rejects extra fields, invalid capacity and forged payment field',()=>{assert.equal(adminChangeSchema.safeParse({action:'settings',revision:0,minimumLeadMinutes:30,defaultSlotCapacity:8,slotIntervalMinutes:15,retentionDays:0}).success,false);assert.equal(adminChangeSchema.safeParse({action:'transition',id:actor,expected:'ready',status:'completed',paid:true}).success,false);});
+test('PostgREST safety failures never report success or expose SQL diagnostics',async()=>{
+ await assert.rejects(adminRpc(env,'forno_admin_change',{p_action:'settings'},async()=>Response.json({code:'21000',message:'UPDATE requires a WHERE clause',details:'Internal SQL context'},{status:400})),error=>error instanceof Error&&error.message==='UNAVAILABLE'&&'status' in error&&error.status===503);
+});
 test('SQL denies a real authenticated non-administrator and nonexistent session',async()=>{await assert.rejects(change('transition',{id:actor,status:'accepted',expected:'pending'},other,otherSession),/ADMIN_FORBIDDEN/);await assert.rejects(change('transition',{id:actor,status:'accepted',expected:'pending'},actor,otherSession),/ADMIN_FORBIDDEN/);});
 test('Full pending → accepted → preparing → ready → completed flow is audited',async()=>{const id=await order();for(const [expected,status] of [['pending','accepted'],['accepted','preparing'],['preparing','ready'],['ready','completed']])await change('transition',{id,expected,status});assert.equal((await db.query<{status:string}>('select status from public.orders where id=$1',[id])).rows[0]!.status,'completed');assert.equal((await db.query<{n:number}>('select count(*)::int n from forno_private.admin_audit where resource_id=$1',[id])).rows[0]!.n,4);});
 test('Refusal releases capacity and cannot be accepted later',async()=>{const id=await order();await change('transition',{id,expected:'pending',status:'rejected'});await assert.rejects(change('transition',{id,expected:'rejected',status:'accepted'}),/ADMIN_TRANSITION/);});

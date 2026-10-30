@@ -49,7 +49,7 @@ Signal visuel pour une nouvelle demande ; son facultatif activé par un geste ex
 
 | Portée | Vérifications | Résultat |
 | --- | --- | --- |
-| Local | 25 tests admin + 14 checkout + 33 commandes existantes | 72 réussis |
+| Local | 26 tests admin + 14 checkout + 33 commandes existantes | 73 réussis |
 | Local | TypeScript, build Astro/Vercel, fonction compilée publique | Réussis, commandes publiques fermées |
 | Fonction Vercel compilée | Pages admin anonymes, API anonymes, cookies, cache privé, CSRF | Réussis avec tout accès réseau interdit dans ce test |
 | Supabase Test réel | Deux migrations admin, RLS, ACL et advisors | Appliquées ; INFO attendues pour tables privées sans politiques publiques. Après création du compte Auth, un WARN fournisseur apparaît pour la protection contre les mots de passe compromis, désactivée |
@@ -98,3 +98,11 @@ Le service du jour Test a été ouvert puis refermé avec confirmation, en conse
 Horaires futurs : fermeture du 30 octobre changée de 21:30 à 21:45, quinze créneaux actifs générés, puis rétablie à 21:30, quatorze actifs. Les anciens créneaux sont conservés. Le créneau de 17:00 du 29 octobre affiche deux pizzas réservées après le refus de F-00000016 ; la réduction à deux est acceptée, celle à un refusée par la RPC. Aucun changement de planning Production.
 
 Mobile 390 px : scrollWidth=clientWidth=390, boutons et navigation basse lisibles ; captures conservées hors dépôt. Aucune donnée personnelle réelle de client utilisée.
+
+## Reprise du 30 octobre — réglages et renouvellement de session
+
+Le premier enregistrement des réglages via PostgREST échouait avec SQLSTATE 21000, alors que l’appel SQL direct et PGlite réussissaient. La configuration Supabase contient `safeupdate` : l’UPDATE de la table à ligne unique n’avait pas de clause WHERE explicite. La migration `20261030051016_fix_admin_singleton_update.sql` ajoute `where singleton=true and admin_revision=cfg.admin_revision` et un contrôle de ligne modifiée. La protection Supabase reste active et les migrations déjà appliquées ne sont pas réécrites. Application uniquement à Test.
+
+Après correction, depuis le vrai formulaire Preview : capacité par défaut 8 → 9, révision 0 → 1 et un événement d’audit ; capacité du créneau existant inchangée à 8. Une tentative de délai 30 → 31 est refusée avec le message métier des commandes en cours, sans incrément de révision. La capacité par défaut est ensuite rétablie à 8. Le contrôle local vérifie aussi qu’une erreur de sécurité PostgREST ferme l’opération sans révéler les détails SQL.
+
+La session créée la veille a été renouvelée automatiquement : les journaux Supabase Test retournent un appel `grant_type=refresh_token` 200 le 30 octobre vers 06:11 Europe/Paris. Aucune lecture du jeton ni nouvelle saisie du mot de passe par l’agent.
