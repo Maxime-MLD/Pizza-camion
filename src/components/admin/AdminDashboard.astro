@@ -1,4 +1,5 @@
 ---
+import PushSettings from './PushSettings.astro';
 import {adminConfig} from '../../config/admin.config';
 interface Props{view:'orders'|'planning'|'settings';}
 const {view}=Astro.props;
@@ -17,6 +18,7 @@ const titles={orders:'Commandes du jour',planning:'Planning du camion',settings:
   <span data-new role="status" class="font-semibold text-secondary-dark"></span>
  </div>}
  <div data-content aria-busy="true" class="mt-5 grid min-w-0 gap-4"><p class="rounded-xl border border-border bg-surface p-6">Chargement sécurisé…</p></div>
+ {view==='settings'&&<PushSettings/>}
  <dialog data-confirm-dialog aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-copy" class="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-surface p-6 text-text backdrop:bg-text/60">
   <form method="dialog">
    <h2 id="admin-confirm-title" class="text-xl font-bold">Confirmer l’action</h2>
@@ -28,4 +30,4 @@ const titles={orders:'Commandes du jour',planning:'Planning du camion',settings:
   </form>
  </dialog>
 </div>
-<script>import '../../scripts/admin-dashboard';</script>
+<script>import '../../scripts/admin-dashboard';import '../../scripts/admin-push';</script>

@@ -16,7 +16,8 @@
     "test:admin": "node --test scripts/test-admin.mjs",
     "test:orders": "node --test scripts/test-orders.mjs",
     "test:turnstile:network": "node scripts/verify-turnstile-network.mjs",
-    "build:sites": "FORNO_DEPLOY_TARGET=sites astro build && node scripts/package-astro-worker.mjs"
+    "build:sites": "FORNO_DEPLOY_TARGET=sites astro build && node scripts/package-astro-worker.mjs",
+    "test:push": "node --test scripts/test-push.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.3.0",

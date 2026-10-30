@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import {adminConfig} from '../config/admin.config';
+import {pushConfig} from '../config/push.config';
+import {siteConfig} from '../config/site.config';
 import {csrfToken} from '../server/admin/session';
 interface Props {title:string;login?:boolean;}
 const {title,login=false}=Astro.props;
@@ -11,9 +13,10 @@ const csrf=csrfToken(Astro.cookies);
  <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="robots" content="noindex,nofollow"/><meta name="csrf-token" content={csrf}/>
+  <link rel="manifest" href={pushConfig.manifest}/><link rel="apple-touch-icon" href={pushConfig.icons.apple}/><meta name="theme-color" content={siteConfig.themeColor}/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content={pushConfig.shortName}/>
   <title>{title} · {adminConfig.brand}</title>
  </head>
- <body class="bg-background font-[family-name:var(--font-body)] text-text">
+ <body data-admin-authenticated={login?'false':'true'} class="bg-background font-[family-name:var(--font-body)] text-text">
   <a href="#admin-main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-surface focus:p-3">Aller au contenu</a>
   <header class="border-b border-border bg-surface pt-[env(safe-area-inset-top)]">
    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -23,10 +26,13 @@ const csrf=csrfToken(Astro.cookies);
    </div>
   </header>
   <main id="admin-main" class="mx-auto min-h-[70svh] max-w-6xl px-4 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6" tabindex="-1">
+   <aside data-pwa-update hidden class="mb-4 rounded-xl border border-border bg-surface p-4"><p class="text-sm">Une mise à jour est prête. Enregistrez vos changements avant de l’appliquer.</p><button data-pwa-update-button class="mt-3 min-h-11 rounded-lg bg-text px-4 font-bold text-background">Mettre à jour l’application</button></aside>
+   <p data-pwa-status role="status" class="text-sm text-muted-foreground"></p>
    <slot/>
   </main>
   {!login&&<nav aria-label="Navigation administrateur" class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
    <div class="mx-auto grid max-w-xl grid-cols-3 gap-1 px-2 py-2">{adminConfig.navigation.map(item=><a href={item.href} aria-current={Astro.url.pathname.replace(/\/$/,'')===item.href.replace(/\/$/,'')?'page':undefined} class:list={['flex min-h-14 items-center justify-center rounded-xl px-2 text-sm font-bold no-underline',Astro.url.pathname.replace(/\/$/,'')===item.href.replace(/\/$/,'')?'bg-text text-background':'text-muted-foreground hover:bg-muted']}>{item.label}</a>)}</div>
   </nav>}
+ <script>import '../scripts/admin-pwa';</script>
  </body>
 </html>

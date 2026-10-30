@@ -1,3 +1,4 @@
+import {updateAppBadge} from './admin-pwa';
 import {adminConfig as cfg} from '../config/admin.config';
 import type {AdminOrder,AdminOrders,AdminService,AdminSettings} from '../types/admin';
 const root=document.querySelector<HTMLElement>('[data-admin-view]');
@@ -68,7 +69,7 @@ if(root){
    if(!response.ok)throw Error('UNAVAILABLE');
    const next=await response.json() as Record<string,unknown>;
    const incoming=view==='orders'?new Set((next.orders as AdminOrder[]).filter(o=>o.status==='pending').map(o=>o.id)):null;
-   if(incoming&&known){const added=[...incoming].filter(id=>!known!.has(id)).length;if(added){root!.querySelector('[data-new]')!.textContent=`${added} nouvelle(s) demande(s)`;if(root!.querySelector<HTMLInputElement>('[data-sound]')!.checked&&audio?.state==='running'){const oscillator=audio.createOscillator();const gain=audio.createGain();gain.gain.value=0.08;oscillator.connect(gain).connect(audio.destination);oscillator.frequency.value=660;oscillator.start();oscillator.stop(audio.currentTime+0.15);}}}known=incoming;
+   if(incoming&&known){const added=[...incoming].filter(id=>!known!.has(id)).length;if(added){root!.querySelector('[data-new]')!.textContent=`${added} nouvelle(s) demande(s)`;if(root!.querySelector<HTMLInputElement>('[data-sound]')!.checked&&audio?.state==='running'){const oscillator=audio.createOscillator();const gain=audio.createGain();gain.gain.value=0.08;oscillator.connect(gain).connect(audio.destination);oscillator.frequency.value=660;oscillator.start();oscillator.stop(audio.currentTime+0.15);}}}known=incoming;if(incoming)void updateAppBadge(incoming.size);
    online=true;connection.textContent=`À jour à ${time(new Date().toISOString())} · actualisation automatique`;const serialized=JSON.stringify({...next,serverNow:undefined});
    const editing=content.contains(document.activeElement)&&document.activeElement?.matches('input,select,textarea');
    if(force||(serialized!==snapshot&&!editing)){data=next;snapshot=serialized;render();}else disable(false);

@@ -5,6 +5,8 @@ import {AdminError} from './server/admin/client';
 export const onRequest=defineMiddleware(async(context,next)=>{
  const path=context.url.pathname.replace(/\/$/,'');
  if(!(path==='/admin'||path.startsWith('/admin/')||path.startsWith('/api/admin/')))return next();
+ // Public application assets contain no session or business data; outer Vercel protection stays intact.
+ if(['/admin/offline','/admin/manifest.webmanifest','/admin/sw.js'].includes(path)||path.startsWith('/admin/icons/'))return next();
  const headers=new Headers();
  // Applies to HTML, API errors and redirects; never cache a refreshed session or PII.
  headers.set('Cache-Control','private, no-store');

@@ -1,0 +1,8 @@
+---
+import '../../styles/global.css';
+import {pushConfig} from '../../config/push.config';
+import {siteConfig} from '../../config/site.config';
+import {brandConfig} from '../../config/brand.config';
+---
+<!doctype html><html lang="fr"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><meta name="robots" content="noindex,nofollow"/><meta name="theme-color" content={siteConfig.themeColor}/><link rel="manifest" href={pushConfig.manifest}/><title>Hors connexion · {pushConfig.name}</title></head>
+<body data-forno-offline="v1" class="bg-background p-6 pt-[calc(3rem+env(safe-area-inset-top))] text-text"><main class="mx-auto max-w-md rounded-2xl border border-border bg-surface p-6"><p class="font-[family-name:var(--font-display)] text-4xl font-extrabold">{brandConfig.name}</p><h1 class="mt-6 text-2xl font-bold">Vous êtes hors connexion.</h1><p class="mt-4 leading-relaxed">Reconnectez cet appareil pour consulter les commandes à jour. Aucune commande ni coordonnée client n’est conservée hors ligne dans cette application.</p><a href={pushConfig.startUrl} class="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-text px-4 font-bold text-background no-underline">Réessayer</a></main></body></html>

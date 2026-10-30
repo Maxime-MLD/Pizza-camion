@@ -3,13 +3,11 @@ import {getAdminEnvironment,mayOpenTest} from '../../../server/admin/environment
 import {adminRpc,authFetch,AdminError} from '../../../server/admin/client';
 import {adminChangeSchema,loginSchema} from '../../../server/admin/schema';
 import {clearSession,cookieNames,validCsrf,validateAccess,writeTokens} from '../../../server/admin/session';
+import {boundedBody} from '../../../server/admin/requestBody';
+import {getPushEnvironment,pushEnabled} from '../../../server/push/environment';
+import {pushCookie} from '../../../server/push/schema';
 export const prerender=false;
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
-async function boundedBody(request:Request):Promise<string>{
- const reader=request.body?.getReader();if(!reader)throw new AdminError('ADMIN_INVALID',400);
- const decoder=new TextDecoder();let text='';let size=0;
- for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8192){await reader.cancel();throw new AdminError('ADMIN_INVALID',413);}text+=decoder.decode(value,{stream:true});}return text+decoder.decode();
-}
 export const ALL:APIRoute=async(context)=>{
  const {request,cookies,locals,params}=context;const action=params.action;const env=getAdminEnvironment();let stage='request';
  try{
@@ -46,11 +44,15 @@ export const ALL:APIRoute=async(context)=>{
    const refresh=cookies.get(cookieNames.refresh)?.value;
    if(refresh){
     const renewed=await authFetch(env,'token?grant_type=refresh_token','POST',{refresh_token:refresh});
-    if(renewed.ok)token=((await renewed.json()) as {access_token:string}).access_token;
+    if(renewed.ok){const pair=await renewed.json() as {access_token:string;refresh_token:string};token=pair.access_token;writeTokens(cookies,pair);}
     else if(renewed.status>=500)throw new AdminError('UNAVAILABLE');
    }
+   if(token&&cookies.get(pushCookie)?.value&&pushEnabled(getPushEnvironment())){
+    try{const identity=await validateAccess(env,token);await adminRpc(env,'forno_push_admin',{p_actor:identity.userId,p_session:identity.sessionId,p_action:'revoke',p_data:{deviceId:cookies.get(pushCookie)!.value}});}
+    catch(error){if(!(error instanceof AdminError)||!['ADMIN_FORBIDDEN','PUSH_FORBIDDEN'].includes(error.code))throw error;}
+   }
    if(token){const response=await authFetch(env,'logout?scope=local','POST',undefined,token);if(!response.ok&&response.status!==401)throw new AdminError('UNAVAILABLE');}
-   clearSession(cookies);return context.redirect('/admin/login/',303);
+   cookies.delete(pushCookie,{path:'/',secure:true});clearSession(cookies);return context.redirect('/admin/login/',303);
   }
   if(action!=='change')throw new AdminError('ADMIN_NOT_FOUND',404);
   if(!locals.admin)throw new AdminError('UNAUTHORIZED',401);

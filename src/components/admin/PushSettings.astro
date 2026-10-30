@@ -1,0 +1,19 @@
+<section data-push-settings class="mt-5 rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="push-settings-title">
+ <h2 id="push-settings-title" class="text-xl font-bold">Notifications sur cet appareil</h2>
+ <p data-push-state role="status" class="mt-3 text-sm text-muted-foreground">Vérification de la compatibilité…</p>
+ <p data-push-feedback role="status" class="mt-3 text-sm font-semibold"></p>
+ <label class="mt-5 grid gap-2 text-sm font-semibold">Nom de cet appareil<input data-push-label maxlength="80" value="Cet appareil" autocomplete="off" class="min-h-12 min-w-0 rounded-lg border border-[var(--color-border-strong)] bg-surface px-3 text-base"/></label>
+ <div class="mt-4 grid gap-3 sm:grid-cols-2">
+  <button data-push-enable disabled class="min-h-12 rounded-xl bg-text px-4 py-3 text-sm font-bold text-background disabled:opacity-50">Activer les notifications</button>
+  <button data-push-test disabled class="min-h-12 rounded-xl border border-[var(--color-border-strong)] px-4 py-3 text-sm font-bold disabled:opacity-50">Envoyer une notification test</button>
+  <button data-push-disable disabled class="min-h-12 rounded-xl border border-primary-dark px-4 py-3 text-sm font-bold text-primary-dark disabled:opacity-50">Désactiver sur cet appareil</button>
+  <button data-pwa-install hidden class="min-h-12 rounded-xl border border-[var(--color-border-strong)] px-4 py-3 text-sm font-bold">Installer l’application</button>
+ </div>
+ <p data-ios-install class="mt-4 text-sm leading-relaxed text-muted-foreground">Sur iPhone : ouvrez ce dashboard dans Safari, utilisez Partager → Ajouter à l’écran d’accueil, puis ouvrez cette application depuis son icône. Connectez-vous si nécessaire et activez ensuite les notifications. L’autorisation est demandée uniquement à votre demande.</p>
+ <p class="mt-3 text-xs leading-relaxed text-muted-foreground">Les notifications signalent une nouvelle demande, sans coordonnées client. Leur réception dépend du réseau et des réglages du téléphone. Le dashboard reste la référence. La déconnexion désactive les alertes de cet appareil.</p>
+ <h3 class="mt-6 text-sm font-bold">Vos appareils</h3>
+ <ul data-push-devices class="mt-3 grid gap-3 text-sm"></ul>
+ <dialog data-push-confirm aria-labelledby="push-remove-title" class="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-surface p-6 text-text backdrop:bg-text/60">
+  <form method="dialog"><h3 id="push-remove-title" class="text-xl font-bold">Retirer cet appareil ?</h3><p class="mt-3 text-sm">Il ne recevra plus de notifications. Vous pourrez le réactiver en vous reconnectant sur cet appareil.</p><div class="mt-6 grid grid-cols-2 gap-3"><button value="cancel" autofocus class="min-h-12 rounded-xl border border-border px-3 font-semibold">Annuler</button><button value="confirm" class="min-h-12 rounded-xl bg-text px-3 font-bold text-background">Retirer</button></div></form>
+ </dialog>
+</section>
